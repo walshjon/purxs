@@ -7,7 +7,8 @@ module URR_openmc_wrapper
        nuclides,&
        n_materials,&
        materials,&
-       e_grid
+       e_grid,&
+       message
   use list_header,     only: ListReal,&
                              ListInt
   use material_header, only: Material
@@ -27,12 +28,13 @@ module URR_openmc_wrapper
        n_materials,&
        materials,&
        e_grid,&
-            ListReal,&
-            ListInt,&
-            Material,&
-            write_message,&
-            prn,&
-            binary_search,&
-            to_str
+       ListReal,&
+       ListInt,&
+       Material,&
+       write_message,&
+       prn,&
+       binary_search,&
+       to_str,&
+       message
 
 end module URR_openmc_wrapper
