@@ -1,7 +1,7 @@
 <urr>
   <settings>
     <endf_6_filepath>/openmc-0.6.1/purxs/data/evaluations/endf-7.1/neutrons/</endf_6_filepath>
-    <avg_xs_filepath>/openmc-0.6.1/purxs/data/avg_xs/</avg_xs_filepath>
+    <avg_xs_filepath>/openmc-0.6.1/purxs/data/processed/avg_xs/</avg_xs_filepath>
     <formalism>SLBW</formalism>
     <w_function_implementation>quick_w</w_function_implementation>
     <num_s_wave>64</num_s_wave>
