@@ -1,3 +1,4 @@
+!>@brief A single-tally data structure
 module URR_tally
 
   use URR_constants, only: ZERO

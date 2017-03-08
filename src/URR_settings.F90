@@ -1,3 +1,4 @@
+!>@brief Settings that control the operaton of PURXS
 module URR_settings
 
   implicit none

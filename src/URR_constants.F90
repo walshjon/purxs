@@ -1,3 +1,4 @@
+!>@brief Physical and variable constants used by PURXS
 module URR_constants
 
   implicit none

@@ -1,3 +1,4 @@
+!>@brief Functions for reading ENDF-6 file into PURXS data structures
 module URR_endf6
 
   use URR_constants, only: SLBW,&

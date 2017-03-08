@@ -1,3 +1,4 @@
+!>@brief Wrapper for OpenMC functions and variables used by PURXS
 module URR_openmc_wrapper
 
   use ace_header,      only: Nuclide,&

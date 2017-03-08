@@ -1,3 +1,4 @@
+!<@brief 2D (x, y) interpolation functions
 module URR_interpolate
 
   use URR_openmc_wrapper, only: prn

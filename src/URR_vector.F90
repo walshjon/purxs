@@ -1,3 +1,4 @@
+!>@brief Vector data structures
 module URR_vector
 
   implicit none

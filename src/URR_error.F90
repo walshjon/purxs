@@ -1,3 +1,4 @@
+!>@brief Functions and variables for logging
 module URR_error
 
   implicit none

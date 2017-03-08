@@ -1,3 +1,4 @@
+!>@brief Functions for reading/writing PURXS data
 module URR_io
 
   use URR_constants, only: ZERO,&

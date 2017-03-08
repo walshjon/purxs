@@ -1,3 +1,4 @@
+!>@brief Resonance data structures and bound functions
 module URR_resonance
 
   use URR_constants,      only: PI,&

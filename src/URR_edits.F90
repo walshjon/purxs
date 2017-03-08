@@ -1,3 +1,4 @@
+!>@brief Utilities for editing out data
 module URR_edits
 
   use URR_constants,      only: ISOTROPIC,&

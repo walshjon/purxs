@@ -1,3 +1,4 @@
+!>@brief Point cross section data structure and bound methods
 module URR_cross_sections
 
   use URR_constants, only: ZERO

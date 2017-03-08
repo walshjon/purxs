@@ -1,3 +1,4 @@
+!>@brief Isotope data structure and bound functions
 module URR_isotope
 
   use URR_constants!TODO
