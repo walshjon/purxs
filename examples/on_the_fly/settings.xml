@@ -1,22 +1,27 @@
 <?xml version="1.0"?>
 <settings>
 
-  <seed>100000000</seed>
+  <!--
+  =========================================================
+  Description: Big Ten Improved Benchmark (from MCNP suite)
+  Case:        IEU-MET-FAST-007 Case 4
+  =========================================================
+  -->
+
   <ptables>true</ptables>
-  <cross_sections>/Users/walshjon/dev/shutmc/src/URR/data/cross_sections_endf71x.xml</cross_sections>
 
   <eigenvalue>
     <batches>60</batches>
     <inactive>10</inactive>
-    <particles>10</particles>
+    <particles>10000</particles>
   </eigenvalue>
 
   <source>
     <space>
       <type>fission</type>
       <parameters>
-	-1. -1. -1.
-	 1.  1.  1.
+        -41.91 -41.91 -57.46750
+         41.91  41.91  39.05250
       </parameters>
     </space>
   </source>
