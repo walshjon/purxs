@@ -13,7 +13,7 @@ module URR_isotope
                                    quickw
   use URR_interpolate,       only: interp_factor,&
                                    interpolate
-  use URR_openmc_wrapper,    only: ListInt, ListReal, master, prn, binary_search
+  use URR_openmc_wrapper,    only: ListInt, ListReal, prn, binary_search
   use URR_probability_table, only: ProbabilityTable
   use URR_resonance,         only: BreitWignerResonanceListVector1D,&
                                    BreitWignerResonanceVector1D,&
@@ -564,10 +564,6 @@ contains
     ! loop over resonances for all spin sequences and add energies
     do i_l = 1, this % NLS(this % i_urr)
       do i_J = 1, this % NJS(i_l)
-        if (master)&
-             write(*,'(I7,A48,I1,A1,F4.1)') this % ZAI,&
-             ': Generating resonances for (l,J) spin sequence ',&
-             i_l - 1, ',', this % AJ(i_l) % dim1(i_J)
         i_list_start = 1
         do i_res = 1, this % n_lam(i_l, i_realization) % dim1(i_J)
           do i_list = i_list_start, this % E_tmp % size()
@@ -822,8 +818,6 @@ contains
     do
       if (i_ES <= this % NE) then
         if (this % E > this % ES(i_ES - 1)) then
-          if (master) write(*,'(I7,A29,ES12.5,A3)') this % ZAI,&
-               ': Reconstructing URR xs below', this % ES(i_ES), ' eV'
           i_ES = i_ES + 1
         end if
       end if
@@ -1385,9 +1379,6 @@ contains
     xs_t_max = XS_CUTOFF
 
     write(zaid_str, '(I6)') this % ZAI
-    if (master)&
-      write(*,*) 'Generating probability tables for ZA '//&
-      trim(adjustl(zaid_str))
 
     if (write_prob_tables) then
       open(unit = tab_unit, file = trim(adjustl(zaid_str))//'-prob-tables.dat')
@@ -1814,9 +1805,6 @@ contains
 
       ! write probability tables out to a file
       if (write_prob_tables) then
-        if (master)&
-          write(*,'(A32,ES10.3,A3)') 'Generated probability tables at', &
-               this % E_tabs(i_E), ' eV'
         do i_T = 1, this % nT_tabs
           this % T = this % T_tabs(i_T)
           write(tab_unit, '(A24,ES24.16)') 'E [eV]', this % E_tabs(i_E)

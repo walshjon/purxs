@@ -9,15 +9,11 @@ module URR_edits
                        INFO
   use URR_openmc_wrapper, only: Material,&
        materials,&
-       e_grid,&
-       Nuclide,&
        nuclides,&
        to_str,&
        n_materials,&
-       Reaction,&
        prn,&
-       fatal_error,&
-       message
+       fatal_error
   use URR_isotope,        only: Isotope,&
                                 isotopes
   use URR_resonance,      only: wigner_level_spacing
@@ -44,8 +40,7 @@ contains
         write(unit_num, '(ES24.16, ES24.16)') x(i), y(i)
       end do
     else
-      message = 'Mismatched vector lengths in write_coords'
-      call fatal_error()
+      call fatal_error('Mismatched vector lengths in write_coords')
     end if
 
     close(unit_num)
