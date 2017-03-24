@@ -280,9 +280,10 @@ contains
     integer :: i_J           ! J loop index
     integer :: i_res_l       ! resonance index for a given l, any J
     integer :: i_res_lJ      ! resonance index for a given l, J
-    integer :: NRS           ! number of resonances for a given l
+    integer, allocatable :: NRS(:) ! num resonances for each l-wave
     integer :: num_sorted_resonances ! number of l-wave resonances that have been sorted by increasing energyg
     type(BreitWignerResonance), allocatable :: l_wave_bw_resonances(:) ! all Breit-Wigner resonances for a given l, sorted by energy
+    type(BreitWignerResonance), allocatable :: resonance_parameter_sums(:) ! for each l-wave
     character(7) :: zaid_str ! ZA number as a string
     character(80) :: rec     ! ENDF-6 file record
 
@@ -294,8 +295,6 @@ contains
     end if
 
     open(unit = res_unit, file = trim(adjustl(zaid_str))//'-urr-realization.dat')
-    write(res_unit, '("ENDF-6 File:")', advance='no')
-    write(res_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_iso)))
 
 10  format(A80)
 
@@ -340,20 +339,22 @@ contains
     write(res_unit, 10) rec
 
     ! LIST
+    allocate(NRS(isotopes(i_iso) % NLS(isotopes(i_iso) % i_urr)))
+    allocate(resonance_parameter_sums(isotopes(i_iso) % NLS(isotopes(i_iso) % i_urr)))
     do i_l = 1, isotopes(i_iso) % NLS(isotopes(i_iso) % i_urr)
       write(rec, 10) ''
       write(rec(1:11),  '(es11.5e1)') isotopes(i_iso) % AWR
       write(rec(12:22), '(es11.5e1)') ZERO ! QX = 0.0 because no competitive width is given
       write(rec(23:33),   '(I11)') i_l - 1
       write(rec(34:44),   '(I11)') 0 ! LRX = 0 --> no competitive width given
-      NRS = 0
+      NRS(i_l) = 0
       do i_J = 1, isotopes(i_iso) % NJS(i_l)
-        NRS = NRS + size(isotopes(i_iso) % urr_resonances(i_l, 1) % J(i_J) % res(:))
+        NRS(i_l) = NRS(i_l) + size(isotopes(i_iso) % urr_resonances(i_l, 1) % J(i_J) % res(:))
       end do
-      write(rec(45:55),   '(I11)') 6 * NRS
-      write(rec(56:66),   '(I11)') NRS
+      write(rec(45:55),   '(I11)') 6 * NRS(i_l)
+      write(rec(56:66),   '(I11)') NRS(i_l)
       write(res_unit, 10) rec
-      allocate(l_wave_bw_resonances(NRS))
+      allocate(l_wave_bw_resonances(NRS(i_l)))
       num_sorted_resonances = size(isotopes(i_iso) % urr_resonances(i_l, 1) % J(1) % res(:))
       l_wave_bw_resonances(1:num_sorted_resonances) =&
            isotopes(i_iso) % urr_resonances(i_l, 1) % J(1) % res(:)
@@ -366,16 +367,22 @@ contains
             i_res_l = i_res_l + 1
             if (i_res_l > num_sorted_resonances) exit
           end do
-          if (i_res_l == NRS) then
+          if (i_res_l == NRS(i_l)) then
             l_wave_bw_resonances(i_res_l) = isotopes(i_iso) % urr_resonances(i_l, 1) % J(i_J) % res(i_res_lJ)
           else
-            l_wave_bw_resonances(i_res_l+1:NRS) = l_wave_bw_resonances(i_res_l:NRS-1)
+            l_wave_bw_resonances(i_res_l+1:NRS(i_l)) = l_wave_bw_resonances(i_res_l:NRS(i_l)-1)
             l_wave_bw_resonances(i_res_l) = isotopes(i_iso) % urr_resonances(i_l, 1) % J(i_J) % res(i_res_lJ)
           end if
           num_sorted_resonances = num_sorted_resonances + 1
         end do
       end do
-      do i_res_l = 1, NRS
+      resonance_parameter_sums(i_l) % E_lam = ZERO
+      resonance_parameter_sums(i_l) % AJ = ZERO
+      resonance_parameter_sums(i_l) % GT = ZERO
+      resonance_parameter_sums(i_l) % GN = ZERO
+      resonance_parameter_sums(i_l) % GG = ZERO
+      resonance_parameter_sums(i_l) % GF = ZERO
+      do i_res_l = 1, NRS(i_l)
         write(rec, 10) ''
         write(rec(1:66), '(6es11.5e1)')&
              l_wave_bw_resonances(i_res_l) % E_lam,&
@@ -385,6 +392,13 @@ contains
              l_wave_bw_resonances(i_res_l) % GG,&
              l_wave_bw_resonances(i_res_l) % GF
         write(res_unit, 10) rec
+        if (i_res_l > 1) resonance_parameter_sums(i_l) % E_lam = resonance_parameter_sums(i_l) % E_lam&
+             + (l_wave_bw_resonances(i_res_l) % E_lam - l_wave_bw_resonances(i_res_l-1) % E_lam)
+        resonance_parameter_sums(i_l) % AJ = resonance_parameter_sums(i_l) % AJ + l_wave_bw_resonances(i_res_l) % AJ
+        resonance_parameter_sums(i_l) % GT = resonance_parameter_sums(i_l) % GT + l_wave_bw_resonances(i_res_l) % GT
+        resonance_parameter_sums(i_l) % GN = resonance_parameter_sums(i_l) % GN + l_wave_bw_resonances(i_res_l) % GN
+        resonance_parameter_sums(i_l) % GG = resonance_parameter_sums(i_l) % GG + l_wave_bw_resonances(i_res_l) % GG
+        resonance_parameter_sums(i_l) % GF = resonance_parameter_sums(i_l) % GF + l_wave_bw_resonances(i_res_l) % GF
       end do
       deallocate(l_wave_bw_resonances)
     end do
@@ -398,6 +412,23 @@ contains
     write(rec(45:55), '(I11)')   0
     write(rec(56:66), '(I11)')   0
     write(res_unit, 10) rec
+
+    write(res_unit, '("Unresolved Resonance Region Realization Summary")')
+    write(res_unit, '("ENDF-6 File:")', advance='no')
+    write(res_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_iso)))
+    do i_l = 1, isotopes(i_iso) % NLS(isotopes(i_iso) % i_urr)
+      write(res_unit, '(A2,I1)') 'l=', i_l
+      write(res_unit, '(A5,I11)')      'NRS: ', NRS(i_l)
+      write(res_unit, '(A5,ES11.5E1)') 'D:   ', resonance_parameter_sums(i_l) % E_lam / (NRS(i_l) - 1)
+      write(res_unit, '(A5,ES11.5E1)') 'AJ:  ', resonance_parameter_sums(i_l) % AJ / NRS(i_l)
+      write(res_unit, '(A5,ES11.5E1)') 'GT:  ', resonance_parameter_sums(i_l) % GT / NRS(i_l)
+      write(res_unit, '(A5,ES11.5E1)') 'GN:  ', resonance_parameter_sums(i_l) % GN / NRS(i_l)
+      write(res_unit, '(A5,ES11.5E1)') 'GG:  ', resonance_parameter_sums(i_l) % GG / NRS(i_l)
+      write(res_unit, '(A5,ES11.5E1)') 'GF:  ', resonance_parameter_sums(i_l) % GF / NRS(i_l)
+    end do
+
+    deallocate(NRS)
+    deallocate(resonance_parameter_sums)
 
     close(res_unit)
 

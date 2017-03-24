@@ -1,21 +1,10 @@
 !>@brief Utilities for editing out data
 module URR_edits
 
-  use URR_constants,      only: ISOTROPIC,&
-       EQUIPROBABLE_32_BINS,&
-       TABULAR
-  use URR_error, only: exit_status,&
-                       log_message,&
-                       INFO
-  use URR_openmc_wrapper, only: Material,&
-       materials,&
-       nuclides,&
-       to_str,&
-       n_materials,&
+  use URR_openmc_wrapper, only:&
        prn,&
        fatal_error
-  use URR_isotope,        only: Isotope,&
-                                isotopes
+  use URR_isotope,        only: isotopes
   use URR_resonance,      only: wigner_level_spacing
 
   implicit none
