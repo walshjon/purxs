@@ -18,6 +18,7 @@ module URR_endf6
                            WARNING
   use URR_io,        only: read_avg_xs
   use URR_isotope,   only: isotopes
+  use URR_openmc_wrapper, only: fatal_error
   use URR_settings,  only: write_avg_xs,&
                            path_endf_files
 
@@ -1516,6 +1517,7 @@ contains
     if (l_val /= l_ref) then
       call exit_status(EXIT_FAILURE,&
            'Unexpected ordering of orbital quantum numbers in '//trim(filename))
+      call fatal_error('PURXS FATAL ERROR')
       return
     end if
 

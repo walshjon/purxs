@@ -417,7 +417,7 @@ contains
     write(res_unit, '("ENDF-6 File:")', advance='no')
     write(res_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_iso)))
     do i_l = 1, isotopes(i_iso) % NLS(isotopes(i_iso) % i_urr)
-      write(res_unit, '(A2,I1)') 'l=', i_l
+      write(res_unit, '(A2,I1)') 'l=', i_l - 1
       write(res_unit, '(A5,I11)')      'NRS: ', NRS(i_l)
       write(res_unit, '(A5,ES11.5E1)') 'D:   ', resonance_parameter_sums(i_l) % E_lam / (NRS(i_l) - 1)
       write(res_unit, '(A5,ES11.5E1)') 'AJ:  ', resonance_parameter_sums(i_l) % AJ / NRS(i_l)
