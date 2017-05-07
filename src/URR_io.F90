@@ -151,20 +151,20 @@ contains
 
     ! check that file exists and is readable
     inquire(file = trim(path_prob_tables)//trim(adjustl(zaid_str))//&
-         &'-urr-tables.dat', exist = file_exists, read = readable)
+         &'-prob-tables.dat', exist = file_exists, read = readable)
     if (.not. file_exists) then
       call exit_status(EXIT_FAILURE, 'Probability table file '//trim(adjustl(zaid_str))//&
-           &'-urr-tables.dat does not exist.')
+           &'-prob-tables.dat does not exist.')
     else if (readable(1:3) == 'NO') then
       call exit_status(EXIT_FAILURE, 'Probability table file '//trim(adjustl(zaid_str))//&
-           &'-urr-tables.dat is not readable.  Change file permissions with &
+           &'-prob-tables.dat is not readable.  Change file permissions with &
            &chmod command.')
     end if
 
     ! open probability table file
     call log_message(INFO, 'Loading probability tables for ZA '//zaid_str)
     open(unit = tab_unit, file =&
-         trim(path_prob_tables)//trim(adjustl(zaid_str))//'-urr-tables.dat')
+         trim(path_prob_tables)//trim(adjustl(zaid_str))//'-prob-tables.dat')
 
 10  format(A255)
     ! ENDF-6 filepath
