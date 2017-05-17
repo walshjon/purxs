@@ -140,7 +140,7 @@ contains
     integer :: tab_unit = 99 ! tables output file unit
     character(7) :: readable ! is probability table file readable?
     character(7) :: zaid_str ! ZA number as a string
-    character(len=:), allocatable :: rec ! file record
+    character(255) :: rec ! file record
 
     if (isotopes(i_iso) % metastable) then
       write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
@@ -169,7 +169,7 @@ contains
 10  format(A255)
     ! ENDF-6 filepath
     read(tab_unit, 10) rec
-    
+
     ! resonance formalism
     read(tab_unit, 10) rec
 
@@ -199,15 +199,15 @@ contains
 
     ! number of energies
     read(tab_unit, 10) rec
-    read(rec(10:80), '(i71)') isotopes(i_iso) % nE_tabs
+    read(rec(10:), '(i246)') isotopes(i_iso) % nE_tabs
 
     ! number of temperatures
     read(tab_unit, 10) rec
-    read(rec(14:80), '(i67)') isotopes(i_iso) % nT_tabs
+    read(rec(14:), '(i242)') isotopes(i_iso) % nT_tabs
 
     ! number of probability-xs bands
     read(tab_unit, 10) rec
-    read(rec(7:80), '(i74)') isotopes(i_iso) % n_bands
+    read(rec(7:), '(i249)') isotopes(i_iso) % n_bands
 
     ! allocate probability tables
     allocate(isotopes(i_iso) % E_tabs(isotopes(i_iso) % nE_tabs))
