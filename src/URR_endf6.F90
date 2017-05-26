@@ -24,7 +24,8 @@ module URR_endf6
 
   implicit none
   private
-  public :: read_endf6
+  public ::&
+       read_endf6
 
   integer :: in = 11 ! input unit
   character(len=:), allocatable :: filename ! ENDF-6 filename
@@ -50,10 +51,11 @@ contains
     logical :: MF1_read    ! has MF=1 been read?
     logical :: MF2_read    ! has MF=2 been read?
     logical :: MF3_read    ! has MF=3 been read?
-    integer :: i  ! isotope index
-    integer :: MF ! MF file number
-    integer :: MT ! MT type number
-    integer :: NS ! record number
+    integer :: i   ! isotope index
+    integer :: MAT ! MAT number
+    integer :: MF  ! MF file number
+    integer :: MT  ! MT type number
+    integer :: NS  ! sequence (line) number
 
     filename = trim(adjustl(filename_tmp))
 
@@ -76,13 +78,20 @@ contains
     MF2_read = .false.
     MF3_read = .false.
 
-    do
+10  format(A80)
+20  format(i4,i2,i3,i5)
+
+    ! read first line
+    read(in, 10) rec
+    read(rec(67:80), 20) isotopes(i) % MAT, MF, MT, NS
+
+    ! if first line is a tape id (TPID) record, move to second line
+    if (NS == 0) then
       read(in, 10) rec
-10    format(A80)
-      read(rec(67:70), '(I4)') isotopes(i) % MAT
-      read(rec(71:72), '(I2)') MF
-      read(rec(73:75), '(I3)') MT
-      read(rec(76:80), '(I5)') NS
+      read(rec(67:80), 20) isotopes(i) % MAT, MF, MT, NS
+    end if
+    MAT = isotopes(i) % MAT
+    do
       if (MF == 1 .and. MT == 451 .and. (.not. MF1_read)) then
         call read_MF1(i, rec)
         MF1_read = .true.
@@ -92,9 +101,11 @@ contains
       else if (MF == 3 .and. MT == 1 .and. (.not. MF3_read)) then
         call read_MF3(i, rec)
         MF3_read = .true.
-      else if (isotopes(i) % MAT == -1) then
+      else if (MAT == -1) then
         exit
       end if
+      read(in, 10) rec
+      read(rec(67:80), 20) MAT, MF, MT, NS
     end do
 
     close(in)

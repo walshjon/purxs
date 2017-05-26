@@ -268,8 +268,14 @@ module URR_isotope
     ! add resonance xs component to the evaluator-supplied background xs in MF3
     procedure :: add_mf3 => add_mf3
 
+    ! subtract the evaluator-supplied background xs in MF3 from the xs so that only the resonance xs component remains
+    procedure :: subtract_mf3 => subtract_mf3
+
     ! add resonance xs component to MF3 or multiply MF3 by self-shielding factor
     procedure :: self_shielding => self_shielding ! make sure this isn't being done both when generating prob tables and then again, inline in prob_band_xs
+
+    ! compute energy-averaged cross sections for a single pointwise realization from an HDF5
+    procedure :: energy_avg_point_xs => energy_avg_point_xs
 
     ! interpolate computed average cross sections
     procedure :: interpolate_avg_xs => interpolate_avg_xs
@@ -2330,6 +2336,7 @@ contains
     type(CrossSections), intent(out) :: xs_out ! library output cross sections
 
     type(Resonance) :: res ! resonance object
+    type(CrossSections) :: mf3_xs ! ENDF-6 MF3 cross sections object
     type(CrossSections) :: avg_xs ! computed average cross sections object
     integer :: i_E      ! first URR parameters energy mesh index
     integer :: iavg     ! average cross section index
@@ -2340,28 +2347,84 @@ contains
     real(8) :: m            ! pointwise xs energy interpolation factor
     real(8) :: favg         ! average cross section interpolation factor
 
-    if (this % point_urr_xs) then
-      i_E = binary_search(this % urr_E, size(this % urr_E), E)
-      m = interp_factor(E, this % urr_E(i_E), this % urr_E(i_E + 1), &
-           LINEAR_LINEAR)
-      xs_out % n = interpolate(&
-           m, this % point_xs(i_E) % n, this % point_xs(i_E + 1) % n, LINEAR_LINEAR)
-      xs_out % f = interpolate(&
-           m, this % point_xs(i_E) % f, this % point_xs(i_E + 1) % f, LINEAR_LINEAR)
-      xs_out % g = interpolate(&
-           m, this % point_xs(i_E) % g, this % point_xs(i_E + 1) % g, LINEAR_LINEAR)
-      if (this % point_xs(i_E) % x > ZERO) then
-        xs_out % x = interpolate(&
-             m, this % point_xs(i_E) % x, this % point_xs(i_E + 1) % x, LINEAR_LINEAR)
-      else
-        xs_out % x = ZERO
-      end if
-      xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
-      return
-    end if
-
     this % E = E
     this % T = T
+
+    if (this % point_urr_xs) then
+      select case(xs_source_pointwise)
+      case(RECONSTRUCTION)
+        i_E = binary_search(this % urr_E, size(this % urr_E), E)
+        m = interp_factor(E, this % urr_E(i_E), this % urr_E(i_E + 1), &
+             LINEAR_LINEAR)
+        xs_out % n = interpolate(&
+             m, this % point_xs(i_E) % n, this % point_xs(i_E + 1) % n, LINEAR_LINEAR)
+        xs_out % f = interpolate(&
+             m, this % point_xs(i_E) % f, this % point_xs(i_E + 1) % f, LINEAR_LINEAR)
+        xs_out % g = interpolate(&
+             m, this % point_xs(i_E) % g, this % point_xs(i_E + 1) % g, LINEAR_LINEAR)
+        if (this % point_xs(i_E) % x > ZERO) then
+          xs_out % x = interpolate(&
+               m, this % point_xs(i_E) % x, this % point_xs(i_E + 1) % x, LINEAR_LINEAR)
+        else
+          xs_out % x = ZERO
+        end if
+
+        xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
+
+      case(HDF5)
+        xs_out % n = xs_in % n
+        xs_out % g = xs_in % g
+        xs_out % f = xs_in % f
+        xs_out % x = xs_in % x
+        xs_out % t = xs_in % t
+        call this % subtract_mf3(xs_out, mf3_xs)
+        if (this % E < this % E_avg_xs(1)) then
+          iavg = 1
+        else if (this % E > this % E_avg_xs(this % num_avg_xs_grid - 1)) then
+          iavg = this % num_avg_xs_grid - 1
+        else
+          iavg = binary_search(this % E_avg_xs, this % num_avg_xs_grid, this % E)
+        end if
+
+        favg = interp_factor(this % E,&
+             this % E_avg_xs(iavg), this % E_avg_xs(iavg + 1), this % INT)
+
+        call this % interpolate_avg_xs(favg, iavg, avg_xs)
+
+        ! competitive xs
+        ! pointwise data from HDF5 file is assumed to follow ENDF-6
+        ! recommendation to ALWAYS use MF3 competitive reaction cross sections
+        xs_out % x = mf3_xs % x
+
+        ! elastic scattering xs
+        xs_out % n = mf3_xs % n * xs_out % n / avg_xs % n
+
+        ! set negative elastic xs and competitive xs to zero
+        if (xs_out % n < ZERO) xs_out % n = ZERO
+        if (xs_out % x < ZERO) xs_out % x = ZERO
+
+        ! radiative capture xs
+        if (avg_xs % g > ZERO) then
+          xs_out % g = mf3_xs % g * xs_out % g / avg_xs % g
+        else
+          xs_out % g = xs_out % g
+        end if
+
+        ! fission xs
+        if (avg_xs % f > ZERO) then
+          xs_out % f = mf3_xs % f * xs_out % f / avg_xs % f
+        else
+          xs_out % f = xs_out % f
+        end if
+
+        xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
+
+      end select
+
+      return
+
+    end if
+
     this % k_n = wavenumber(this % AWR, abs(this % E))
     this % k_lam = this % k_n
 
@@ -2543,10 +2606,18 @@ contains
       if (xs_out % x < ZERO) xs_out % x = ZERO
 
       ! capture xs
-      if (avg_xs % g > ZERO) xs_out % g = xs_out % g / avg_xs % g * xs_in % g
+      if (avg_xs % g > ZERO) then
+        xs_out % g = xs_out % g / avg_xs % g * xs_in % g
+      else
+        xs_out % g = xs_in % g
+      end if
 
       ! fission xs
-      if (avg_xs % f > ZERO) xs_out % f = xs_out % f / avg_xs % f * xs_in % f
+      if (avg_xs % f > ZERO) then
+        xs_out % f = xs_out % f / avg_xs % f * xs_in % f
+      else
+        xs_out % f = xs_in % f
+      end if
 
       ! total xs
       xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
@@ -3941,6 +4012,109 @@ contains
   end subroutine self_shielding
 
 
+!> Compute energy-averaged cross sections of a pointwise realization from an
+!! OpenMC-style HDF5 nuclear data file
+  subroutine energy_avg_point_xs(this, h5_E_grid, h5_xs)
+
+    class(Isotope), intent(inout) :: this ! isotope object
+    real(8),             intent(in), allocatable :: h5_E_grid(:) ! pointwise HDF5 energy grid
+    type(CrossSections), intent(in), allocatable :: h5_xs(:)     ! pointwise HDF5 xs
+
+    type(CrossSections), allocatable :: res_int_avg_xs(:) ! energy-averaged xs
+    type(CrossSections) :: ri ! resonance integrals for a coarse energy group
+    real(8) :: delta_ri ! contribution to resonance integral from the energy interval between two points
+    real(8), allocatable :: e_grp_grid(:) ! coarse, energy-averaged xs energy grid
+    real(8) :: e_grp_lo, e_grp_hi ! lower and upper bounding coarse grid energies
+    integer :: i_pt_lo, i_pt_hi ! pointwise indices corresponding to e_grp_lo, e_grp_hi
+    integer :: i_grp ! index of the coarse, energy-averaged xs energy group
+    real(8) :: e_pt_hi, e_pt_lo ! lower and upper bounding pointwise grid energies
+    integer :: i_pt  ! index of the pointwise energy
+    real(8) :: mf3_xs_lo, mf3_xs_hi ! lower and upper bounding MF3 xs
+    integer :: i_mf3 ! index of MF3 energy grid
+    real(8) :: res_xs_lo, res_xs_hi ! lower and upper bounding HDF5 cross sectios
+
+    e_grp_grid = this % E_avg_xs
+    allocate(res_int_avg_xs(this % num_avg_xs_grid - 1))
+
+    do i_grp = 1, this % num_avg_xs_grid - 1
+      e_grp_lo = e_grp_grid(i_grp)
+      e_grp_hi = e_grp_grid(i_grp + 1)
+      i_pt_lo = binary_search(h5_E_grid, size(h5_E_grid), e_grp_lo)
+      e_grp_lo = h5_E_grid(i_pt_lo)
+      i_pt_hi = binary_search(h5_E_grid, size(h5_E_grid), e_grp_hi)
+      e_grp_hi = h5_E_grid(i_pt_hi)
+      ri % n = ZERO
+      ri % g = ZERO
+      ri % f = ZERO
+      ri % x = ZERO
+      do i_pt = i_pt_lo, i_pt_hi - 1
+        e_pt_lo = h5_E_grid(i_pt)
+        e_pt_hi = h5_E_grid(i_pt+1)
+
+        i_mf3 = binary_search(this % MF3_n_e, size(this % MF3_n_e), e_pt_lo)
+        mf3_xs_lo = interpolate(interp_factor(e_pt_lo, this % MF3_n_e(i_mf3), &
+             this % MF3_n_e(i_mf3+1), this % INT), this % MF3_n(i_mf3), &
+             this % MF3_n(i_mf3+1), this % INT)
+        i_mf3 = binary_search(this % MF3_n_e, size(this % MF3_n_e), e_pt_hi)
+        mf3_xs_hi = interpolate(interp_factor(e_pt_hi, this % MF3_n_e(i_mf3), &
+             this % MF3_n_e(i_mf3+1), this % INT), this % MF3_n(i_mf3), &
+             this % MF3_n(i_mf3+1), this % INT)
+        res_xs_lo = h5_xs(i_pt) % n - mf3_xs_lo
+        res_xs_hi = h5_xs(i_pt+1) % n - mf3_xs_hi
+        delta_ri = (res_xs_lo + res_xs_hi) / TWO * (e_pt_hi - e_pt_lo)
+        ri % n = ri % n + delta_ri
+        i_mf3 = binary_search(this % MF3_g_e, size(this % MF3_g_e), e_pt_lo)
+        mf3_xs_lo = interpolate(interp_factor(e_pt_lo, this % MF3_g_e(i_mf3), &
+             this % MF3_g_e(i_mf3+1), this % INT), this % MF3_g(i_mf3), &
+             this % MF3_g(i_mf3+1), this % INT)
+        i_mf3 = binary_search(this % MF3_g_e, size(this % MF3_g_e), e_pt_hi)
+        mf3_xs_hi = interpolate(interp_factor(e_pt_hi, this % MF3_g_e(i_mf3), &
+             this % MF3_g_e(i_mf3+1), this % INT), this % MF3_g(i_mf3), &
+             this % MF3_g(i_mf3+1), this % INT)
+        res_xs_lo = h5_xs(i_pt) % g - mf3_xs_lo
+        res_xs_hi = h5_xs(i_pt+1) % g - mf3_xs_hi
+        delta_ri = (res_xs_lo + res_xs_hi) / TWO * (e_pt_hi - e_pt_lo)
+        ri % g = ri % g + delta_ri
+        i_mf3 = binary_search(this % MF3_f_e, size(this % MF3_f_e), e_pt_lo)
+        mf3_xs_lo = interpolate(interp_factor(e_pt_lo, this % MF3_f_e(i_mf3), &
+             this % MF3_f_e(i_mf3+1), this % INT), this % MF3_f(i_mf3), &
+             this % MF3_f(i_mf3+1), this % INT)
+        i_mf3 = binary_search(this % MF3_f_e, size(this % MF3_f_e), e_pt_hi)
+        mf3_xs_hi = interpolate(interp_factor(e_pt_hi, this % MF3_f_e(i_mf3), &
+             this % MF3_f_e(i_mf3+1), this % INT), this % MF3_f(i_mf3), &
+             this % MF3_f(i_mf3+1), this % INT)
+        res_xs_lo = h5_xs(i_pt) % f - mf3_xs_lo
+        res_xs_hi = h5_xs(i_pt+1) % f - mf3_xs_hi
+        delta_ri = (res_xs_lo + res_xs_hi) / TWO * (e_pt_hi - e_pt_lo)
+        ri % f = ri % f + delta_ri
+      end do
+
+      res_int_avg_xs(i_grp) % n = ri % n / (e_grp_hi - e_grp_lo)
+      res_int_avg_xs(i_grp) % g = ri % g / (e_grp_hi - e_grp_lo)
+      res_int_avg_xs(i_grp) % f = ri % f / (e_grp_hi - e_grp_lo)
+    end do
+
+    this % avg_xs(1) % n = res_int_avg_xs(1) % n
+    this % avg_xs(1) % g = res_int_avg_xs(1) % g
+    this % avg_xs(1) % f = res_int_avg_xs(1) % f
+    do i_grp = 1, this % num_avg_xs_grid - 2
+      this % avg_xs(i_grp+1) % n = (res_int_avg_xs(i_grp) % n + res_int_avg_xs(i_grp+1) % n) / TWO
+      this % avg_xs(i_grp+1) % g = (res_int_avg_xs(i_grp) % g + res_int_avg_xs(i_grp+1) % g) / TWO
+      this % avg_xs(i_grp+1) % f = (res_int_avg_xs(i_grp) % f + res_int_avg_xs(i_grp+1) % f) / TWO
+    end do
+    this % avg_xs(this % num_avg_xs_grid) % n =&
+         res_int_avg_xs(this % num_avg_xs_grid - 1) % n
+    this % avg_xs(this % num_avg_xs_grid) % g =&
+         res_int_avg_xs(this % num_avg_xs_grid - 1) % g
+    this % avg_xs(this % num_avg_xs_grid) % f =&
+         res_int_avg_xs(this % num_avg_xs_grid - 1) % f
+
+    deallocate(res_int_avg_xs)
+    deallocate(e_grp_grid)
+
+  end subroutine energy_avg_point_xs
+
+
 !> Add the resonance xs component to the evaluator-supplied background xs in MF3
   subroutine add_mf3(this, xs)
 
@@ -3948,7 +4122,6 @@ contains
     type(CrossSections), intent(inout)  :: xs ! partial cross sections object
 
     type(CrossSections) :: xs_tmp ! local partial cross sections object
-    integer :: i_nuc  ! nuclide index
     integer :: i_grid ! background energy grid index
     real(8) :: fmf3   ! File 3 interpolation factor
 
@@ -4071,6 +4244,126 @@ contains
     xs % t = xs % n + xs % g + xs % f + xs % x
 
   end subroutine add_mf3
+
+
+!> Subtract the evaluator-supplied background xs in MF3 from the xs so that only
+!! the resonance xs component remains
+  subroutine subtract_mf3(this, xs, xs_mf3)
+
+    class(Isotope), intent(in) :: this ! isotope object
+    type(CrossSections), intent(inout) :: xs     ! partial cross sections object
+    type(CrossSections), intent(out)   :: xs_mf3 ! MF3 partial cross sections object
+
+    integer :: i_grid ! background energy grid index
+    real(8) :: fmf3   ! File 3 interpolation factor
+
+    if (xs_source_pointwise /= HDF5) call exit_status(EXIT_FAILURE, 'Subtraction&
+         & of MF3 cross section only implemented for OpenMC-style HDF5 nuclear data')
+
+    ! elastic xs
+    xs_mf3 % n = ZERO
+    if (this % E < this % MF3_n_e(1)) then
+      call exit_status(EXIT_FAILURE, 'Energy is below File 3 elastic energy grid')
+      return
+
+    else if (this % E > this % MF3_n_e(size(this % MF3_n_e))) then
+      call exit_status(EXIT_FAILURE, 'Energy is above File 3 elastic energy grid')
+      return
+
+    else
+      i_grid = binary_search(this % MF3_n_e, size(this % MF3_n_e),this % E)
+      if (this % INT == LINEAR_LINEAR &
+           .or. (this % MF3_n(i_grid) > ZERO &
+           .and. this % MF3_n(i_grid + 1) > ZERO)) then
+        fmf3 = interp_factor(this % E, this % MF3_n_e(i_grid), &
+             this % MF3_n_e(i_grid + 1), this % INT)
+        xs_mf3 % n = interpolate(fmf3, this % MF3_n(i_grid),&
+             this % MF3_n(i_grid + 1), this % INT)
+        xs % n = xs % n - xs_mf3 % n
+
+      else
+        xs % n = xs % n
+
+      end if
+    end if
+
+    if (xs % n < ZERO) xs % n = ZERO
+
+    ! competitive reaction xs
+    if (xs % x < ZERO) xs % x = ZERO
+    xs_mf3 % x = xs % x
+
+    ! capture xs
+    xs_mf3 % g = ZERO
+    if (this % E < this % MF3_g_e(1)) then
+      call exit_status(EXIT_FAILURE, 'Energy is below File 3 capture energy grid')
+      return
+
+    else if (this % E > this % MF3_g_e(size(this % MF3_g_e))) then
+      call exit_status(EXIT_FAILURE, 'Energy is above File 3 capture energy grid')
+      return
+
+    else
+      i_grid = binary_search(this % MF3_g_e, size(this % MF3_g_e), this % E)
+      if (this % INT == LINEAR_LINEAR &
+           .or. (this % MF3_g(i_grid) > ZERO &
+           .and. this % MF3_g(i_grid + 1) > ZERO)) then
+        fmf3 = interp_factor(this % E, this % MF3_g_e(i_grid), &
+             this % MF3_g_e(i_grid + 1), this % INT)
+        xs_mf3 % g = interpolate(fmf3, this % MF3_g(i_grid), &
+             this % MF3_g(i_grid + 1), this % INT)
+        xs % g = xs % g - xs_mf3 % g
+
+      else
+        xs % g = xs % g
+
+      end if
+    end if
+
+    if (xs % g < ZERO) xs % g = ZERO
+
+    ! fission xs
+    if (this % LFW == 1) then
+      xs_mf3 % f = ZERO
+      if (.not. (allocated(this % MF3_f_e))) then
+        xs % f = xs % f
+
+      else
+        if (this % E < this % MF3_f_e(1)) then
+          xs % f = xs % f
+
+        else if (this % E > this % MF3_f_e(size(this % MF3_f_e))) then
+          call exit_status(EXIT_FAILURE, 'Energy is above File 3 fission energy grid')
+          return
+
+        else
+          i_grid = binary_search(this % MF3_f_e, size(this % MF3_f_e), this%E)
+          if (this % INT == LINEAR_LINEAR &
+               .or. (this % MF3_f(i_grid) > ZERO &
+               .and. this % MF3_f(i_grid + 1) > ZERO)) then
+            fmf3 = interp_factor(this % E, this % MF3_f_e(i_grid), &
+                 this % MF3_f_e(i_grid + 1), this % INT)
+            xs_mf3 % f = interpolate(fmf3, this%MF3_f(i_grid),&
+                 this % MF3_f(i_grid + 1), this % INT)
+            xs % f = xs % f - xs_mf3 % f
+
+          else
+            xs % f = xs % f
+
+          end if
+        end if
+      end if
+    else
+      xs % f = xs % f
+      xs_mf3 % f = xs % f
+    end if
+
+    if (xs % f < ZERO) xs % f = ZERO
+
+    xs % t = xs % n + xs % g + xs % f + xs % x
+    xs_mf3 % t = xs_mf3 % n + xs_mf3 % g + xs_mf3 % f + xs_mf3 % x
+
+  end subroutine subtract_mf3
 
 
 !> Deallocate ENDF-6 File 3 evaluator-supplied background cross sections

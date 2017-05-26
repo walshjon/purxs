@@ -77,6 +77,10 @@ module URR_constants
   ! Source of background cross sections
   integer, parameter :: ENDFFILE  = 1
 
+  ! Source of pointwise URR cross sections
+  integer, parameter :: RECONSTRUCTION = 1 ! reconstruct xs within purxs
+  integer, parameter :: HDF5 = 2           ! read xs from HDF5 data file
+
   ! Secondary angular distribution representation
   integer, parameter :: ISOTROPIC            = 1
   integer, parameter :: EQUIPROBABLE_32_BINS = 2
