@@ -8,6 +8,8 @@
   =========================================================
   -->
 
+  <cross_sections>../../data/processed/openmc_ace_hdf5/cross_sections_endf71x_hdf5.xml</cross_sections>
+
   <!-- Homogenized HEU, Natural U, and Voids -->
   <material id="1">
     <density units="sum" />
