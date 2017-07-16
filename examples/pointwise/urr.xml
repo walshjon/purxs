@@ -1,7 +1,7 @@
 <urr>
   <settings>
-    <endf_6_filepath>../../data/evaluations/endf-7.1/neutrons/</endf_6_filepath>
-    <avg_xs_filepath>../../data/processed/avg_xs/endf-7.1/slbw/</avg_xs_filepath>
+    <endf_6_filepath>../../data/evaluated/endfb71/neutrons/</endf_6_filepath>
+    <avg_xs_filepath>../../data/processed/avg_xs/endfb71/slbw/</avg_xs_filepath>
     <formalism>SLBW</formalism>
     <w_function_implementation>quick_w</w_function_implementation>
     <num_s_wave>64</num_s_wave>
