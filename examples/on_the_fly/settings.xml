@@ -8,6 +8,7 @@
   =========================================================
   -->
 
+  <temperature_default>293.6</temperature_default>
   <ptables>true</ptables>
 
   <eigenvalue>
