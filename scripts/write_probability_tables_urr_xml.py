@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Script for generating probability table URR cross sections urr.xml input file
+Script for generating probability table cross sections PURXS urr.xml input file
 """
 
 import os
@@ -48,14 +48,13 @@ probability_tables.temperature_interpolation_method('log-log')
 isotopes = xml.IsotopesListElement()
 urr_files = endf6.urr_filenames(endf_6_filepath)
 urr_files.sort()
-zaids, symbols = endf6.zaids_symbols(urr_files)
+symbols = endf6.symbols(urr_files)
 for i in range(len(urr_files)):
     include_isotope = False
     if ('all' in urr_isotopes) or (symbols[i] in urr_isotopes):
         include_isotope = True
     if include_isotope:
         isotope = xml.IsotopeElement()
-        isotope.zaid(zaids[i])
         isotope.endf_6_file(urr_files[i])
         isotopes.add_isotope(isotope)
 

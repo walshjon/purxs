@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/bin/bash -l
 
 #MSUB -l walltime=12:00:00
 #MSUB -l nodes=1:ppn=1
 #MSUB -j oe
 #MSUB -V
 
-export EXE=$HOME/dev/shutmc/src/build/bin/shutmc
+export EXE=openmc
 
-mpirun -np 1 $EXE $PWD --purxs
+mpirun -np 1 $EXE $PWD --purxs # PURXS-only mode, no OpenMC transport
+#mpirun -np 1 $EXE $PWD         # regular OpenMC transport simulation using PURXS for processing, as specified in urr.xml

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 export JOB_SCRIPT=purxs.slurm
 
