@@ -19,7 +19,7 @@
   </isotopes>
   <probability_tables>
     <read_tables>False</read_tables>
-    <filepath>../../data/processed/probability_tables/endfb71/slbw/</filepath>
+    <filepath>../../data/processed/prob_tables/endfb71/slbw/</filepath>
     <temperature_interpolation_method>log-log</temperature_interpolation_method>
     <num_bands>16</num_bands>
     <temperature_grid>
@@ -40,10 +40,10 @@
     </temperature_grid>
     <min_num_batches>64</min_num_batches>
     <max_num_batches>1024</max_num_batches>
-    <num_histories>64</num_histories>
+    <num_histories>512</num_histories>
     <tolerance>0.001</tolerance>
     <energy_spacing>logarithmic</energy_spacing>
-    <num_energies>16</num_energies>
+    <num_energies>64</num_energies>
     <write_tables>True</write_tables>
     <write_avg_xs>True</write_avg_xs>
   </probability_tables>
