@@ -12,10 +12,10 @@
     <competitive_structure>True</competitive_structure>
   </settings>
   <isotopes>
-    <isotope zaid="92234" endf_6_file="n-092_U_234.endf"/>
-    <isotope zaid="92235" endf_6_file="n-092_U_235.endf"/>
-    <isotope zaid="92236" endf_6_file="n-092_U_236.endf"/>
-    <isotope zaid="92238" endf_6_file="n-092_U_238.endf"/>
+    <isotope endf_6_file="n-092_U_234.endf"/>
+    <isotope endf_6_file="n-092_U_235.endf"/>
+    <isotope endf_6_file="n-092_U_236.endf"/>
+    <isotope endf_6_file="n-092_U_238.endf"/>
   </isotopes>
   <probability_tables>
     <read_tables>False</read_tables>

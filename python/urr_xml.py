@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-API for generating OpenMC XML input files for the URR package
+API for generating OpenMC XML input files for the PURXS package
 
 public classes:
 URRElement               -- top-level object
@@ -34,7 +34,6 @@ class URRElement(object):
 
     def add_element(self, element):
         """add an XML sub-element to the <urr> XML element"""
-
         self.xml_element_.append(cp.deepcopy(element.xml_element_))
 
     def write_xml(self):
@@ -113,7 +112,6 @@ class IsotopesListElement(object):
 
     def add_isotope(self, isotope):
         """add an isotope sub-element to the <isotopes> XML element"""
-
         self.xml_element_.append(cp.deepcopy(isotope.xml_element_))
 
 
@@ -124,9 +122,6 @@ class IsotopeElement(object):
 
     def __init__(self):
         self.xml_element_ = et.Element('isotope')
-
-    def zaid(self, zaid_int):
-        self.xml_element_.set('zaid', str(zaid_int))
 
     def endf_6_file(self, endf_6_file_str):
         self.xml_element_.set('endf_6_file', endf_6_file_str)
@@ -266,6 +261,11 @@ class PointwiseElement(object):
 
     def __init__(self):
         self.xml_element_ = et.Element('pointwise')
+
+    def source(self, source_str):
+        self.source_ = et.SubElement(
+            self.xml_element_, 'source')
+        self.source_.text = source_str
 
     def min_energy_spacing(self, min_energy_spacing_float):
         self.min_energy_spacing_ = et.SubElement(

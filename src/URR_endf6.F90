@@ -133,10 +133,6 @@ contains
     read(rec(12:22), '(E11.0)') isotopes(i) % AWR
     read(rec(23:33), '(I11)')   isotopes(i) % LRP
 
-    call check_zaid(isotopes(i) % ZAI, isotopes(i) % ZAI)
-
-    call check_mass(isotopes(i) % AWR, isotopes(i) % AWR)
-
     ! check that resonance parameters are given
     call check_parameters(isotopes(i) % LRP)
 
