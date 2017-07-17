@@ -2,8 +2,63 @@
 module URR_constants
 
   implicit none
-!TODO  private
-  public
+  private
+  public ::&
+       FALSE,&
+       ZERO,&
+       HALF,&
+       ONE,&
+       SQRT_PI,&
+       TWO,&
+       THREE,&
+       PI,&
+       FOUR,&
+       INF,&
+       ONEI,&
+       K_BOLTZMANN,&
+       C_1,&
+       XS_CUTOFF,&
+       ENDF_PRECISION,&
+       MIT_W,&
+       QUICK_W,&
+       SLBW,&
+       MLBW,&
+       REICH_MOORE,&
+       ADLER_ADLER,&
+       R_MATRIX,&
+       R_FUNCTION,&
+       R_MATRIX_LIM,&
+       MNBW,&
+       E_NEUTRON,&
+       E_RESONANCE,&
+       LOGARITHMIC,&
+       USER,&
+       ENDF6,&
+       HISTOGRAM,&
+       LINEAR_LINEAR,&
+       LINEAR_LOG,&
+       LOG_LINEAR,&
+       LOG_LOG,&
+       SQRT_LINEAR,&
+       SQRT_LOG,&
+       STATISTICAL,&
+       LOW_NEIGHBOR,&
+       LINEAR,&
+       ENDFFILE,&
+       RECONSTRUCTION,&
+       HDF5,&
+       CHI2,&
+       ON_THE_FLY,&
+       PROB_BANDS,&
+       POINTWISE,&
+       EVENT,&
+       HISTORY,&
+       BATCH,&
+       SIMULATION,&
+       get_energy_dependence,&
+       get_faddeeva_method,&
+       get_formalism_name
+       
 
   integer, parameter :: FALSE = 0
   real(8), parameter :: ZERO  = 0.0_8
@@ -88,7 +143,7 @@ module URR_constants
 
   ! tabulated chi-squared distribution for 1-4 degrees of freedom with expected
   ! bin values taken while preserving equiprobable bins
-  real(8), dimension(100,4), parameter :: chi2 = reshape((/&
+  real(8), dimension(100,4), parameter :: CHI2 = reshape((/&
        5.2361522573878303e-05_8,&
        3.6657014603380927e-04_8,&
        9.9518491948712953e-04_8,&

@@ -4,11 +4,14 @@ module URR_edits
   use URR_openmc_wrapper, only:&
        prn,&
        fatal_error
-  use URR_isotope,        only: isotopes
-  use URR_resonance,      only: wigner_level_spacing
+  use URR_isotope, only:&
+       isotopes
+  use URR_resonance, only:&
+       wigner_level_spacing
 
   implicit none
   private
+
 
 contains
 

@@ -7,12 +7,15 @@ module URR_io
        SLBW,&
        MLBW,&
        REICH_MOORE
-  use URR_error,     only: exit_status,&
-                           log_message,&
-                           EXIT_FAILURE,&
-                           INFO
-  use URR_isotope,   only: isotopes
-  use URR_resonance, only: BreitWignerResonance
+  use URR_error, only:&
+       exit_status,&
+       log_message,&
+       EXIT_FAILURE,&
+       INFO
+  use URR_isotope, only:&
+       isotopes
+  use URR_resonance, only:&
+       BreitWignerResonance
   use URR_settings,  only:&
        endf_filenames,&
        formalism,&
@@ -22,9 +25,11 @@ module URR_io
 
   implicit none
   private
-  public :: read_avg_xs,&
-            read_prob_tables,&
-            write_MF2
+  public ::&
+       read_avg_xs,&
+       read_prob_tables,&
+       write_MF2
+
 
 contains
 
@@ -351,7 +356,6 @@ contains
     NS = NS + 1
     write(res_unit, 10) rec
 
-!TODO: handle NRO / =1
     ! CONT (handles SLBW, LRF = 1; MLBW, LRF = 2; and RM, LRF = 3)
     write(rec, 10) ''
     write(rec(1:11),  '(A11)') endf6_floating_point(isotopes(i_iso) % SPI(isotopes(i_iso) % i_urr))
@@ -422,7 +426,9 @@ contains
                endf6_floating_point(l_wave_bw_resonances(i_res_l) % GG),&
                endf6_floating_point(l_wave_bw_resonances(i_res_l) % GF)
         else if (formalism == REICH_MOORE) then
-!TODO: convert SLBW/MLBW fission widths to Reich-Moore, setting both to ZERO reduces RM to an R-function
+
+          ! physics of converting SLBW/MLBW fission widths to Reich-Moore not defined,
+          ! so set both partial widths to ZERO which reduces RM to an R-function
           write(rec(1:66), '(6A11)')&
                endf6_floating_point(l_wave_bw_resonances(i_res_l) % E_lam),&
                endf6_floating_point(l_wave_bw_resonances(i_res_l) % AJ),&

@@ -1,25 +1,30 @@
 !>@brief 2D (x, y) interpolation functions
 module URR_interpolate
 
-  use URR_openmc_wrapper, only: prn
-  use URR_constants, only: ZERO,&
-                           ONE,&
-                           HISTOGRAM,&
-                           LINEAR_LINEAR,&
-                           LINEAR_LOG,&
-                           LOG_LINEAR,&
-                           LOG_LOG,&
-                           SQRT_LINEAR,&
-                           SQRT_LOG,&
-                           STATISTICAL,&
-                           LOW_NEIGHBOR
-  use URR_error, only: exit_status,&
-                       EXIT_FAILURE
+  use URR_openmc_wrapper, only:&
+       prn
+  use URR_constants, only:&
+       ZERO,&
+       ONE,&
+       HISTOGRAM,&
+       LINEAR_LINEAR,&
+       LINEAR_LOG,&
+       LOG_LINEAR,&
+       LOG_LOG,&
+       SQRT_LINEAR,&
+       SQRT_LOG,&
+       STATISTICAL,&
+       LOW_NEIGHBOR
+  use URR_error, only:&
+       exit_status,&
+       EXIT_FAILURE
 
   implicit none
   private
-  public :: interp_factor,&
-            interpolate
+  public ::&
+       interp_factor,&
+       interpolate
+
 
 contains
 

@@ -1,11 +1,13 @@
 !>@brief Point cross section data structure and bound methods
 module URR_cross_sections
 
-  use URR_constants, only: ZERO
+  use URR_constants, only:&
+       ZERO
   implicit none
   private
-  public :: CrossSections,&
-            xs_samples_tmp
+  public ::&
+       CrossSections,&
+       xs_samples_tmp
 
 !> Elastic, capture, fission, competitive, and total cross sections at a single
 !! energy
@@ -25,6 +27,7 @@ module URR_cross_sections
   end type CrossSections
 
   type(CrossSections), allocatable :: xs_samples_tmp(:,:)
+
 
 contains
 

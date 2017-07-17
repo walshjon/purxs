@@ -3,9 +3,10 @@ module URR_vector
 
   implicit none
   private
-  public :: VectorReal1D,&
-            VectorReal2D,&
-            VectorInt1D
+  public ::&
+       VectorReal1D,&
+       VectorReal2D,&
+       VectorInt1D
 
 
 !> Vector of reals

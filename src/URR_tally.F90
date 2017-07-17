@@ -1,11 +1,13 @@
 !>@brief A single-tally data structure
 module URR_tally
 
-  use URR_constants, only: ZERO
+  use URR_constants, only:&
+       ZERO
 
   implicit none
   private
-  public :: Tally
+  public ::&
+       Tally
 
 
 !> Data for a probability table cross section tally
@@ -30,6 +32,7 @@ module URR_tally
     procedure :: flush_xs_stats => flush_xs_stats
 
  end type Tally
+
 
 contains
 

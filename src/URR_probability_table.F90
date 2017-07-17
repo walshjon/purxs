@@ -1,11 +1,13 @@
 !>@brief Probability table data structure
 module URR_probability_table
 
-  use URR_tally, only: Tally
+  use URR_tally, only:&
+       Tally
 
   implicit none
   private
-  public :: ProbabilityTable
+  public ::&
+       ProbabilityTable
 
 
 !> Type containing data for a single probability table

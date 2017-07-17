@@ -3,40 +3,42 @@ module URR_settings
 
   implicit none
   private
-  public :: use_urr,&
-            competitive_structure,&
-            num_isotopes,&
-            xs_representation,&
-            formalism,&
-            background_xs_treatment,&
-            parameter_energy_dependence,&
-            num_l_waves,&
-            faddeeva_method,&
-            write_avg_xs,&
-            write_prob_tables,&
-            pregenerated_prob_tables,&
-            num_energies_prob_tables,&
-            num_temperatures_prob_tables,&
-            num_bands_prob_tables,&
-            num_histories_prob_tables,&
-            min_num_batches_prob_tables,&
-            max_num_batches_prob_tables,&
-            E_grid_scheme_prob_tables,&
-            temperature_interp_scheme,&
-            rel_err_tolerance_avg_xs,&
-            E_grid_prob_tables,&
-            T_grid_prob_tables,&
-            realization_frequency,&
-            num_urr_realizations,&
-            i_realization,&
-            i_realization_user,&
-            min_delta_E_pointwise,&
-            rel_err_tolerance_pointwise,&
-            xs_source_pointwise,&
-            path_avg_xs,&
-            path_prob_tables,&
-            path_endf_files,&
-            endf_filenames
+  public ::&
+       use_urr,&
+       competitive_structure,&
+       num_isotopes,&
+       xs_representation,&
+       formalism,&
+       background_xs_treatment,&
+       parameter_energy_dependence,&
+       num_l_waves,&
+       faddeeva_method,&
+       write_avg_xs,&
+       write_prob_tables,&
+       pregenerated_prob_tables,&
+       num_energies_prob_tables,&
+       num_temperatures_prob_tables,&
+       num_bands_prob_tables,&
+       num_histories_prob_tables,&
+       min_num_batches_prob_tables,&
+       max_num_batches_prob_tables,&
+       E_grid_scheme_prob_tables,&
+       temperature_interp_scheme,&
+       rel_err_tolerance_avg_xs,&
+       E_grid_prob_tables,&
+       T_grid_prob_tables,&
+       realization_frequency,&
+       num_urr_realizations,&
+       i_realization,&
+       i_realization_user,&
+       min_delta_E_pointwise,&
+       rel_err_tolerance_pointwise,&
+       xs_source_pointwise,&
+       path_avg_xs,&
+       path_prob_tables,&
+       path_endf_files,&
+       endf_filenames
+
 
   ! general
   logical :: use_urr               ! use any of the URR methods?

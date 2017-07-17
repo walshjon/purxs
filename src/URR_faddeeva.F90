@@ -6,12 +6,17 @@
 !! that module are taken from codes written at, and obtained from, ANL.
 module URR_faddeeva
 
-  use URR_constants, only: ZERO, HALF, ONE, ONEI
+  use URR_constants, only:&
+       ZERO,&
+       HALF,&
+       ONE,&
+       ONEI
   use ISO_C_BINDING
  
   implicit none
   private
-  public :: quickw,&
+  public ::&
+       quickw,&
        faddeeva_w,&
        tabulate_w
 
@@ -30,6 +35,7 @@ module URR_faddeeva
             REAL(C_DOUBLE)           , value :: RELERR
     end function faddeeva_w
   end interface
+
 
 contains
 

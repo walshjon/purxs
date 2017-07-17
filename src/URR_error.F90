@@ -3,14 +3,16 @@ module URR_error
 
   implicit none
   private
-  public :: EXIT_SUCCESS,&
-            EXIT_FAILURE,&
-            EXIT_WARNING,&
-            ERROR,&
-            WARNING,&
-            INFO,&
-            exit_status,&
-            log_message
+  public ::&
+       EXIT_SUCCESS,&
+       EXIT_FAILURE,&
+       EXIT_WARNING,&
+       ERROR,&
+       WARNING,&
+       INFO,&
+       exit_status,&
+       log_message
+
 
   ! Error codes returned to application code from calls to the API
   integer, parameter :: EXIT_SUCCESS = 0

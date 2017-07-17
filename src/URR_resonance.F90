@@ -1,22 +1,26 @@
 !>@brief Resonance data structures and bound functions
 module URR_resonance
 
-  use URR_constants,      only: PI,&
-                                FOUR,&
-                                SLBW,&
-                                MLBW,&
-                                REICH_MOORE,&
-                                MNBW
-  use URR_cross_sections, only: CrossSections
+  use URR_constants, only:&
+       PI,&
+       FOUR,&
+       SLBW,&
+       MLBW,&
+       REICH_MOORE,&
+       MNBW
+  use URR_cross_sections, only:&
+       CrossSections
+
   implicit none
   private
-  public :: BreitWignerResonance,&
-            BreitWignerResonanceListVector1D,&
-            BreitWignerResonanceVector1D,&
-            BreitWignerResonanceVector2D,&
-            ReichMooreResonanceVector1D,&
-            Resonance,&
-            wigner_level_spacing
+  public ::&
+       BreitWignerResonance,&
+       BreitWignerResonanceListVector1D,&
+       BreitWignerResonanceVector1D,&
+       BreitWignerResonanceVector2D,&
+       ReichMooreResonanceVector1D,&
+       Resonance,&
+       wigner_level_spacing
 
 
 !> Data for a resonance contributing to URR cross sections

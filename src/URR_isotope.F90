@@ -1,35 +1,110 @@
 !>@brief Isotope data structure and bound functions
 module URR_isotope
 
-  use URR_constants!TODO
-  use URR_cross_sections,    only: CrossSections,&
-                                   xs_samples_tmp
-  use URR_error,             only: EXIT_SUCCESS,&
-                                   EXIT_FAILURE,&
-                                   ERROR,&
-                                   exit_status,&
-                                   log_message
-  use URR_faddeeva,          only: faddeeva_w,&
-                                   quickw
-  use URR_interpolate,       only: interp_factor,&
-                                   interpolate
-  use URR_openmc_wrapper,    only: ListInt, ListReal, prn, binary_search
-  use URR_probability_table, only: ProbabilityTable
-  use URR_resonance,         only: BreitWignerResonanceListVector1D,&
-                                   BreitWignerResonanceVector1D,&
-                                   BreitWignerResonanceVector2D,&
-                                   ReichMooreResonanceVector1D,&
-                                   Resonance,&
-                                   wigner_level_spacing
-  use URR_settings!TODO
-  use URR_vector,            only: VectorReal1D,&
-                                   VectorReal2D,&
-                                   VectorInt1D
+  use URR_constants, only:&
+       K_BOLTZMANN,&
+       ZERO,&
+       HALF,&
+       ONE,&
+       SQRT_PI,&
+       TWO,&
+       THREE,&
+       PI,&
+       FOUR,&
+       INF,&
+       C_1,&
+       CHI2,&
+       E_NEUTRON,&
+       E_RESONANCE,&
+       ENDF_PRECISION,&
+       ENDFFILE,&
+       ENDF6,&
+       FALSE,&
+       get_energy_dependence,&
+       get_faddeeva_method,&
+       get_formalism_name,&
+       HDF5,&
+       LINEAR_LINEAR,&
+       LOGARITHMIC,&
+       LOW_NEIGHBOR,&
+       MIT_W,&
+       MLBW,&
+       MNBW,&
+       QUICK_W,&
+       RECONSTRUCTION,&
+       REICH_MOORE,&
+       SLBW,&
+       STATISTICAL,&
+       USER,&
+       XS_CUTOFF
+  use URR_cross_sections, only:&
+       CrossSections,&
+       xs_samples_tmp
+  use URR_error, only:&
+       EXIT_SUCCESS,&
+       EXIT_FAILURE,&
+       ERROR,&
+       exit_status,&
+       log_message
+  use URR_faddeeva, only:&
+       faddeeva_w,&
+       quickw
+  use URR_interpolate, only:&
+       interp_factor,&
+       interpolate
+  use URR_openmc_wrapper, only:&
+       ListInt,&
+       ListReal,&
+       prn,&
+       binary_search
+  use URR_probability_table, only:&
+       ProbabilityTable
+  use URR_resonance, only:&
+       BreitWignerResonanceListVector1D,&
+       BreitWignerResonanceVector1D,&
+       BreitWignerResonanceVector2D,&
+       ReichMooreResonanceVector1D,&
+       Resonance,&
+       wigner_level_spacing
+  use URR_settings, only:&
+       background_xs_treatment,&
+       competitive_structure,&
+       E_grid_prob_tables,&
+       E_grid_scheme_prob_tables,&
+       endf_filenames,&
+       faddeeva_method,&
+       formalism,&
+       i_realization,&
+       i_realization_user,&
+       max_num_batches_prob_tables,&
+       min_delta_E_pointwise,&
+       min_num_batches_prob_tables,&
+       num_bands_prob_tables,&
+       num_energies_prob_tables,&
+       num_histories_prob_tables,&
+       num_l_waves,&
+       num_temperatures_prob_tables,&
+       num_urr_realizations,&
+       parameter_energy_dependence,&
+       path_endf_files,&
+       rel_err_tolerance_avg_xs,&
+       rel_err_tolerance_pointwise,&
+       T_grid_prob_tables,&
+       temperature_interp_scheme,&
+       write_avg_xs,&
+       write_prob_tables,&
+       xs_source_pointwise
+  use URR_vector, only:&
+       VectorReal1D,&
+       VectorReal2D,&
+       VectorInt1D
 
   implicit none
   private
-  public :: Isotope,&
-            isotopes
+  public ::&
+       Isotope,&
+       isotopes
+
 
 !> Type containing data and procedures for processing the URR of an isotope
   type Isotope
@@ -63,10 +138,8 @@ module URR_isotope
     integer :: LSSF    ! self-shielding factor flag
     integer :: INT     ! ENDF-6 interpolation law for parameters and xs
     integer :: MF3_INT ! ENDF-6 interpolation law for File 3 xs
-! TODO: check for interpolation law consistency
-! TODO: use LRX if ZERO's aren't given for competitive width in ENDF when LRX = 0
-    integer :: LFW     ! energy-dependent fission width flag
-    integer :: LRX     ! competitive width flag
+    integer :: LFW     ! are average fission widths given?
+    integer :: LRX     ! are competitive widths given?
     integer :: NE      ! number of URR tabulated data energies
     real(8) :: E_ex1 = INF ! first level inelastic scattering excitation energy
     real(8) :: E_ex2 = INF ! second level inelastic scattering excitation energy
@@ -164,7 +237,7 @@ module URR_isotope
     type(ListReal) :: x_tmp ! scratch competitive xs
     type(ListReal) :: t_tmp ! scratch total xs
     real(8), allocatable :: urr_E(:) ! energy grid values
-    type(CrossSections), allocatable :: point_xs(:) ! pointwise, CE cross sections !TODO
+    type(CrossSections), allocatable :: point_xs(:) ! pointwise, CE cross sections
 
   ! Type-Bound procedures
   contains
@@ -669,9 +742,10 @@ contains
                 i_rrr_res = this % resolved_resonance_index(this % L, this % J, i_res)
 
                 ! fewer RRR resonances w/ this J value then needed;
-                ! just grab the URR 'edge' resonances that were generated in the RRR
-!TODO: take however many RRR resonances there actually are, even if too few
-                if (i_rrr_res == 0) exit
+                ! take however many RRR resonances there actually are, even if too few,
+                ! and add additional URR resonances above the current energy point to
+                ! get to n_res resonances
+                if (i_rrr_res == 0) cycle
 
                 ! add this resolved resonance
                 res % i_res = res % i_res + 1
@@ -975,10 +1049,10 @@ contains
                          this % L, this % J, i_res)
 
                     ! fewer RRR resonances w/ this J value then needed;
-                    ! just grab the URR 'edge' resonances that were generated
-                    ! in the RRR
-!TODO: take however many RRR resonances there actually are, even if too few
-                    if (i_rrr_res == 0) exit
+                    ! take however many RRR resonances there actually are, even if too few,
+                    ! and add additional URR resonances above the current energy point to
+                    ! get to n_res resonances
+                    if (i_rrr_res == 0) cycle
 
                     ! add this resolved resonance
                     res % i_res = res % i_res + 1
@@ -1200,9 +1274,10 @@ contains
                 i_rrr_res = this % resolved_resonance_index(this % L, this % J, i_res)
 
                 ! fewer RRR resonances w/ this J value then needed;
-                ! just grab the URR 'edge' resonances that were generated in the RRR
-!TODO: take however many RRR resonances there actually are, even if too few
-                if (i_rrr_res == 0) exit
+                ! take however many RRR resonances there actually are, even if too few,
+                ! and add additional URR resonances above the current energy point to
+                ! get to n_res resonances
+                if (i_rrr_res == 0) cycle
 
                 ! add this resolved resonance
                 res % i_res = res % i_res + 1
@@ -1604,7 +1679,6 @@ contains
 
                   ! add this contribution to the accumulated partial cross
                   ! section values built up from all resonances
-! TODO: consider moving t outside of loop
                   call this % resonance_contribution(res, i_E, i_T)
 
                 end do TEMPERATURES_LOOP
@@ -1978,7 +2052,7 @@ contains
   end subroutine alloc_ensemble
 
 
-!> Deallocate a URR resonance ensemble realization
+!> Deallocate a URR resonance realization
   subroutine dealloc_ensemble(this)
 
     class(Isotope), intent(inout) :: this ! isotope object
@@ -1995,7 +2069,7 @@ contains
 
         ! loop over total angular momenta
         do i_J = 1, this % NJS(i_l)
-! TODO: deallocate resonances of the proper formalism once MLBW, RM allowed
+
           ! deallocate resonance parameters
           deallocate(this % urr_resonances(i_l, i_ens) % J(i_J) % res)
       
@@ -2152,7 +2226,6 @@ contains
       case (1)
         this % ac(i_ER) = this % AP(i_ER)
 
-! TODO: understand this and implement it correctly
       ! use energy dependent scattering radius in phase shifts but the energy
       ! independent AP scattering radius value for penetrabilities and shift
       ! factors
@@ -2324,9 +2397,6 @@ contains
 !> Calculate URR cross section values on-the-fly, generating a new realization
 !! about each new E_n OR from pre-computed pointwise values reconstructed at
 !! simulation initialization
-!! @tTODO: fix-up the RRR-URR energy crossover as in xs_otf; probably need
-!! to utilize mlbw_resonances, slbw_resonances, in place of rm_resonances, where
-!! appropriate
   subroutine new_realization_otf_xs(this, E, T, xs_in, xs_out)
 
     class(Isotope), intent(inout) :: this ! isotope object
@@ -2552,7 +2622,6 @@ contains
 
           ! add this contribution to the accumulated partial cross
           ! section values built up from all resonances
-! TODO: move t outside of loop
           call xs_out % accum_resonance(res % xs_contribution)
 
         end do RESONANCES_LOOP
@@ -2766,7 +2835,6 @@ contains
     end if
 
     if (this % LSSF == 0) then
-! TODO: consider moving addition of File 3 background to prob band calculation
       if (competitive_structure) then
         xs_out % x = xs_in % x + xs_out % x
       else
@@ -2777,7 +2845,6 @@ contains
       xs_out % f = xs_in % f + xs_out % f
 
     else if (this % LSSF == 1) then
-! TODO: consider moving multiplication by File 3 background to prob band calculation
       iavg = binary_search(this % E_avg_xs, this % num_avg_xs_grid, this % E)
       favg = interp_factor(&
            E, this % E_avg_xs(iavg), this % E_avg_xs(iavg + 1), this % INT)
@@ -4474,12 +4541,12 @@ contains
           rho = this % k_n * this % ac(this % i_urr)
           nu  = this % P_l_n / rho
           res % Gam_n = this % GN0 * sqrt(abs(this % E)) * nu &
-               * chi2(i_tabn, this % AMUN)
+               * CHI2(i_tabn, this % AMUN)
         else if (parameter_energy_dependence == E_RESONANCE) then
           rho = this % k_lam * this % ac(this % i_urr)
           nu  = this % P_l_lam / rho
           res % Gam_n = this % GN0 * sqrt(abs(res % E_lam)) * nu &
-               * chi2(i_tabn, this % AMUN)
+               * CHI2(i_tabn, this % AMUN)
         end if
       else
         call exit_status(EXIT_FAILURE, 'Non-positive neutron width sampled')
@@ -4488,7 +4555,7 @@ contains
 
       ! fission width
       if (this % AMUF > 0) then
-        res % Gam_f = this % GF * chi2(i_tabf, this % AMUF) / dble(this % AMUF)
+        res % Gam_f = this % GF * CHI2(i_tabf, this % AMUF) / dble(this % AMUF)
       else
         res % Gam_f = ZERO
       end if
@@ -4499,7 +4566,7 @@ contains
 
       ! competitive width
       if (this % AMUX > 0) then
-        res % Gam_x = this % GX * chi2(i_tabx, this % AMUX) / dble(this % AMUX)
+        res % Gam_x = this % GX * CHI2(i_tabx, this % AMUX) / dble(this % AMUX)
       else
         res % Gam_x = ZERO
       end if

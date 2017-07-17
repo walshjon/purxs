@@ -1,26 +1,32 @@
 !>@brief Functions for reading ENDF-6 file into PURXS data structures
 module URR_endf6
 
-  use URR_constants, only: SLBW,&
-                           MLBW,&
-                           REICH_MOORE,&
-                           ADLER_ADLER,&
-                           R_MATRIX,&
-                           R_FUNCTION,&
-                           R_MATRIX_LIM,&
-                           ZERO,&
-                           ONE,&
-                           LINEAR_LINEAR
-  use URR_error,     only: exit_status,&
-                           log_message,&
-                           EXIT_FAILURE,&
-                           INFO,&
-                           WARNING
-  use URR_io,        only: read_avg_xs
-  use URR_isotope,   only: isotopes
-  use URR_openmc_wrapper, only: fatal_error
-  use URR_settings,  only: write_avg_xs,&
-                           path_endf_files
+  use URR_constants, only:&
+       SLBW,&
+       MLBW,&
+       REICH_MOORE,&
+       ADLER_ADLER,&
+       R_MATRIX,&
+       R_FUNCTION,&
+       R_MATRIX_LIM,&
+       ZERO,&
+       ONE,&
+       LINEAR_LINEAR
+  use URR_error, only:&
+       exit_status,&
+       log_message,&
+       EXIT_FAILURE,&
+       INFO,&
+       WARNING
+  use URR_io, only:&
+       read_avg_xs
+  use URR_isotope, only:&
+       isotopes
+  use URR_openmc_wrapper, only:&
+       fatal_error
+  use URR_settings, only:&
+       write_avg_xs,&
+       path_endf_files
 
   implicit none
   private
@@ -37,7 +43,8 @@ module URR_endf6
      
      
   end type ENDF6Flags
-  
+
+
 contains
 
 
@@ -531,10 +538,10 @@ contains
   end subroutine check_interp_regions
 
 
-!> Check that there is an allowable interpolation scheme
+!> Check for interpolation scheme consistency
   subroutine check_interp_scheme(INTERP, MF3_INT)
 
-    integer :: INTERP     ! interpolation scheme for current region
+    integer :: INTERP  ! interpolation scheme for current region
     integer :: MF3_INT ! overall isotope interpolation scheme
 
     if (INTERP /= MF3_INT) call log_message(WARNING,&
