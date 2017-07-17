@@ -126,10 +126,8 @@ contains
     read(rec(12:22), '(E11.0)') isotopes(i) % AWR
     read(rec(23:33), '(I11)')   isotopes(i) % LRP
 
-! TODO:    ! check ZAID agreement
     call check_zaid(isotopes(i) % ZAI, isotopes(i) % ZAI)
 
-! TODO:    ! check mass ratios
     call check_mass(isotopes(i) % AWR, isotopes(i) % AWR)
 
     ! check that resonance parameters are given
@@ -146,18 +144,18 @@ contains
     integer :: i_ER ! resonance energy range index
     integer :: NIS  ! number of isotopes in material
     real(8) :: ZA
-    real(8) :: A
+    real(8) :: AWR
     real(8) :: ABN
 
     read(rec(1:11),  '(E11.0)') ZA
-    read(rec(12:22), '(E11.0)') A
+    read(rec(12:22), '(E11.0)') AWR
     read(rec(45:55), '(I11)')   NIS
 
     ! check ZAID agreement
     call check_zaid(int(ZA), isotopes(i) % ZAI)
 
     ! check that mass is consistent
-    call check_mass(A, isotopes(i) % AWR)
+    call check_mass(AWR, isotopes(i) % AWR)
 
     ! check that this is a single-isotope ENDF-6 file
     call check_single_isotope(NIS)
@@ -195,13 +193,13 @@ contains
       read(rec(56:66),   '(I11)') isotopes(i) % NAPS(i_ER)
 
       ! check number of resonance energy ranges and their bounding energies
-      call check_energy_ranges(isotopes(i) % NER, isotopes(i) % EL(i_ER), isotopes(i) % EH(i_ER))
+      call check_energy_range(isotopes(i) % EL(i_ER), isotopes(i) % EH(i_ER))
 
       ! check channel, scattering radius energy dependence flags
       call check_radius_flags(isotopes(i) % NRO(i_ER), isotopes(i) % NAPS(i_ER))
 
       ! read energy range and formalism-dependent resonance subsection data
-      call read_resonance_subsection(i, i_ER, isotopes(i) % LRU(i_ER), isotopes(i) %LRF(i_ER))
+      call read_resonance_subsection(i, i_ER, isotopes(i) % LRU(i_ER), isotopes(i) % LRF(i_ER))
 
     end do
 
@@ -216,14 +214,14 @@ contains
     integer :: i_e    ! index in energy grid
     integer :: MF     ! ENDF-6 MF flag
     integer :: MT     ! ENDF-6 MT flag
-    integer :: NP     ! number of energy-xs pairs
+    integer :: NP     ! number of energy-xs pairs for all interpolation regions
     integer :: NR     ! number of interpolation regions
-    integer :: NBT    ! number of entries separating interp. ranges N and N+1
+    integer :: NBT    ! number of energy-xs pairs up to the energy boundary between current interpolation region and the next
     integer :: INTERP ! File 3 reaction xs interpolation flag
     character(80) :: rec ! ENDF-6 file record
-    real(8) :: ZA ! ZAID
-    real(8) :: A  ! mass in neutron masses
-    real(8) :: QI ! reaction Q-value
+    real(8) :: ZA  ! ZAID
+    real(8) :: AWR ! mass in neutron masses
+    real(8) :: QI  ! reaction Q-value
     logical :: read_MT ! read this MT reaction?
 
 10  format(A80)
@@ -241,13 +239,13 @@ contains
     end do
 
     read(rec(1:11),  '(E11.0)') ZA
-    read(rec(12:22), '(E11.0)') A
+    read(rec(12:22), '(E11.0)') AWR
 
     ! check ZAID agreement
     call check_zaid(int(ZA), isotopes(i) % ZAI)
 
     ! check that mass is consistent
-    call check_mass(A, isotopes(i) % AWR)
+    call check_mass(AWR, isotopes(i) % AWR)
 
     ! read MF=3, record=2
     read(in, 10) rec
@@ -261,9 +259,6 @@ contains
     read(in, 10) rec
     read(rec( 1:11), '(I11)') NBT
     read(rec(12:22), '(I11)') isotopes(i) % MF3_INT
-
-    ! check number of energy-xs pairs in this interpolation region
-    call check_n_pairs(NBT, NP)
 
     allocate(isotopes(i) % MF3_n_e(NP))
     allocate(isotopes(i) % MF3_n(NP))
@@ -304,13 +299,13 @@ contains
 
     if (read_MT) then
       read(rec(1:11),  '(E11.0)') ZA
-      read(rec(12:22), '(E11.0)') A
+      read(rec(12:22), '(E11.0)') AWR
 
       ! check ZAID agreement
       call check_zaid(int(ZA), isotopes(i) % ZAI)
 
       ! check that mass is consistent
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! read MF=3, record=2
       read(in, 10) rec
@@ -324,9 +319,6 @@ contains
       read(in, 10) rec
       read(rec( 1:11), '(I11)') NBT
       read(rec(12:22), '(I11)') INTERP
-
-      ! check number of energy-xs pairs in this interpolation region
-      call check_n_pairs(NBT, NP)
 
       ! check interpolation scheme is same as isotope interpolation scheme
       call check_interp_scheme(INTERP, isotopes(i) % MF3_INT)
@@ -375,18 +367,18 @@ contains
 
     if (read_MT) then
       read(rec(1:11),  '(E11.0)') ZA
-      read(rec(12:22), '(E11.0)') A
+      read(rec(12:22), '(E11.0)') AWR
 
       ! check ZAID agreement
       call check_zaid(int(ZA), isotopes(i) % ZAI)
 
       ! check that mass is consistent
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! read MF=3, record=2
       read(in, 10) rec
       read(rec(12:22), '(E11.0)') QI
-      isotopes(i) % E_ex1 = (A + ONE) / A * (-QI)
+      isotopes(i) % E_ex1 = (AWR + ONE) / AWR * (-QI)
       read(rec(45:55), '(I11)') NR
       read(rec(56:66), '(I11)') NP
 
@@ -397,9 +389,6 @@ contains
       read(in, 10) rec
       read(rec( 1:11), '(I11)') NBT
       read(rec(12:22), '(I11)') INTERP
-
-      ! check number of energy-xs pairs in this interpolation region
-      call check_n_pairs(NBT, NP)
 
       ! check interpolation scheme is same as isotope interpolation scheme
       call check_interp_scheme(INTERP, isotopes(i) % MF3_INT)
@@ -448,18 +437,18 @@ contains
 
     if (read_MT) then
       read(rec(1:11),  '(E11.0)') ZA
-      read(rec(12:22), '(E11.0)') A
+      read(rec(12:22), '(E11.0)') AWR
 
       ! check ZAID agreement
       call check_zaid(int(ZA), isotopes(i) % ZAI)
 
       ! check that mass is consistent
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! read MF=3, record=2
       read(in, 10) rec
       read(rec(12:22), '(E11.0)') QI
-      isotopes(i) % E_ex2 = (A + ONE) / A * (-QI)
+      isotopes(i) % E_ex2 = (AWR + ONE) / AWR * (-QI)
     end if
 
     read_MT = .false.
@@ -481,13 +470,13 @@ contains
 
     if (read_MT) then
       read(rec(1:11),  '(E11.0)') ZA
-      read(rec(12:22), '(E11.0)') A
+      read(rec(12:22), '(E11.0)') AWR
 
       ! check ZAID agreement
       call check_zaid(int(ZA), isotopes(i) % ZAI)
 
       ! check that mass is consistent
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! read MF=3, record=2
       read(in, 10) rec
@@ -501,9 +490,6 @@ contains
       read(in, 10) rec
       read(rec( 1:11), '(I11)') NBT
       read(rec(12:22), '(I11)') INTERP
-
-      ! check number of energy-xs pairs in this interpolation region
-      call check_n_pairs(NBT, NP)
 
       ! check interpolation scheme is same as isotope interpolation scheme
       call check_interp_scheme(INTERP, isotopes(i) % MF3_INT)
@@ -545,20 +531,6 @@ contains
   end subroutine check_interp_regions
 
 
-!> Check that there is an allowable number of energy-xs pairs
-  subroutine check_n_pairs(NBT, NP)
-
-    integer :: NBT ! number of pairs between this and the next interp. region
-    integer :: NP  ! number of energy-xs pairs
-
-    if (NBT /= NP) then
-      call log_message(WARNING,&
-           'Different NBT and NP values in File 3 for '//trim(filename))
-    end if
-
-  end subroutine check_n_pairs
-
-
 !> Check that there is an allowable interpolation scheme
   subroutine check_interp_scheme(INTERP, MF3_INT)
 
@@ -587,7 +559,7 @@ contains
     case(0)
 
       call exit_status(EXIT_FAILURE,&
-           'Scattering radius only (LRU = 0) not supported in '//trim(filename))
+           'Scattering radius only (LRU=0) not supported ('//trim(filename)//')')
       return
 
     ! resolved parameters
@@ -606,22 +578,22 @@ contains
 
       case(ADLER_ADLER)
         call exit_status(EXIT_FAILURE,&
-             'Adler-Adler (LRF=4) formalism not supported in '//trim(filename))
+             'Adler-Adler (LRF=4) formalism not supported ('//trim(filename)//')')
         return
 
       case(R_MATRIX)
         call exit_status(EXIT_FAILURE,&
-             'General R-Matrix (LRF=5) formalism not allowed in '//trim(filename))
+             'General R-Matrix (LRF=5) formalism not supported ('//trim(filename)//')')
         return
 
       case(R_FUNCTION)
         call exit_status(EXIT_FAILURE,&
-             'Hybrid R-Function (LRF=6) formalism not allowed in '//trim(filename))
+             'Hybrid R-Function (LRF=6) formalism not supported ('//trim(filename)//')')
         return
 
       case(R_MATRIX_LIM)
         call exit_status(EXIT_FAILURE,&
-             'R-Matrix Limited (LRF=7) formalism not supported in '//trim(filename))
+             'R-Matrix Limited (LRF=7) formalism not supported ('//trim(filename)//')')
         return
 
       ! default case
@@ -650,7 +622,7 @@ contains
 
       case default
          call exit_status(EXIT_FAILURE,&
-              'LRF values other than 1 and 2 are not supported in '//trim(filename))
+              'LRF must be 1 or 2 because LRU=2 in '//trim(filename))
          return
 
        end select
@@ -658,7 +630,7 @@ contains
     ! default case
     case default
       call exit_status(EXIT_FAILURE,&
-           'LRU values other than 0, 1 or 2 are not allowed in '//trim(filename))
+           'LRU must be 1 or 2 in '//trim(filename))
       return
 
     end select
@@ -677,7 +649,7 @@ contains
     integer :: NRS  ! number of resonances for this orbital quantum number
     integer :: i_R  ! resonance index
     integer :: LRX  ! competitive width flag
-    real(8) :: A    ! isotope/neutron mass ratio
+    real(8) :: AWR  ! isotope/neutron mass ratio
     real(8) :: QX   ! Q-value to be added to COM energy
 
     ! read first line of energy range subsection
@@ -687,11 +659,10 @@ contains
     read(rec(12:22), '(E11.0)') isotopes(i) % AP(i_ER)
     call isotopes(i) % channel_radius(i_ER)
     read(rec(45:55), '(I11)')   isotopes(i) % NLS(i_ER)
-    if (isotopes(i) % NLS(i_ER) > 3) then
-      call exit_status(EXIT_FAILURE,&
-           'SLBW parameters given for a resonance higher than d-wave')
-      return
-    end if
+    if (isotopes(i) % NLS(i_ER) > 3) &
+         call log_message(WARNING,&
+              'SLBW parameters are given for a resonance higher than d-wave in'//&
+              trim(adjustl(filename))//' and will be ignored in URR calculations.')
 
     ! allocate SLBW resonance vectors for each l
     allocate(isotopes(i) % bw_resonances(isotopes(i) % NLS(i_ER)))
@@ -699,7 +670,7 @@ contains
     ! loop over orbital quantum numbers
     do i_l = 0, isotopes(i) % NLS(i_ER) - 1
       read(in, 10) rec
-      read(rec(1:11),  '(E11.0)') A
+      read(rec(1:11),  '(E11.0)') AWR
       read(rec(12:22), '(E11.0)') QX
       read(rec(23:33),   '(I11)') L
       read(rec(34:44),   '(I11)') LRX
@@ -709,7 +680,7 @@ contains
       call isotopes(i) % bw_resonances(i_l + 1) % alloc(NRS)
 
       ! check mass ratios
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! check that Q-value is 0.0
       call check_q_value(QX)
@@ -773,7 +744,7 @@ contains
     integer :: NRS  ! number of resonances for this orbital quantum number
     integer :: i_R  ! resonance index
     integer :: LRX  ! competitive width flag
-    real(8) :: A    ! isotope/neutron mass ratio
+    real(8) :: AWR  ! isotope/neutron mass ratio
     real(8) :: QX   ! Q-value to be added to COM energy
 
     ! read first line of energy range subsection
@@ -783,11 +754,10 @@ contains
     read(rec(12:22), '(E11.0)') isotopes(i) % AP(i_ER)
     call isotopes(i) % channel_radius(i_ER)
     read(rec(45:55), '(I11)')   isotopes(i) % NLS(i_ER)
-    if (isotopes(i) % NLS(i_ER) > 3) then
-      call exit_status(EXIT_FAILURE,&
-           'MLBW parameters given for a resonance higher than d-wave')
-      return
-    end if
+    if (isotopes(i) % NLS(i_ER) > 3) &
+         call log_message(WARNING,&
+              'MLBW parameters are given for a resonance higher than d-wave in'//&
+              trim(adjustl(filename))//' and will be ignored in URR calculations.')
 
     ! allocate MLBW resonance vectors for each l
     allocate(isotopes(i) % bw_resonances(isotopes(i) % NLS(i_ER)))
@@ -795,7 +765,7 @@ contains
     ! loop over orbital quantum numbers
     do i_l = 0, isotopes(i) % NLS(i_ER) - 1
       read(in, 10) rec
-      read(rec(1:11),  '(E11.0)') A
+      read(rec(1:11),  '(E11.0)') AWR
       read(rec(12:22), '(E11.0)') QX
       read(rec(23:33),   '(I11)') L
       read(rec(34:44),   '(I11)') LRX
@@ -805,7 +775,7 @@ contains
       call isotopes(i) % bw_resonances(i_l + 1) % alloc(NRS)
 
       ! check mass ratios
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! check that Q-value is 0.0
       call check_q_value(QX)
@@ -867,7 +837,7 @@ contains
     integer :: L    ! orbital quantum number
     integer :: NRS  ! number of resonances for this orbital quantum number
     integer :: i_R  ! resonance index
-    real(8) :: A    ! isotope/neutron mass ratio
+    real(8) :: AWR  ! isotope/neutron mass ratio
     real(8) :: APL  ! l-dependent AP value
 
     ! read first line of energy range subsection
@@ -879,7 +849,8 @@ contains
     read(rec(45:55), '(I11)')   isotopes(i) % NLS(i_ER)
     if (isotopes(i) % NLS(i_ER) > 3) &
          call log_message(WARNING,&
-         'R-M parameters given for a resonance higher than d-wave')
+              'RM parameters are given for a resonance higher than d-wave in'//&
+              trim(adjustl(filename))//' and will be ignored in URR calculations.')
 
     ! allocate Reich-Moore resonance vectors for each l
     allocate(isotopes(i) % rm_resonances(isotopes(i) % NLS(i_ER)))
@@ -887,7 +858,7 @@ contains
     ! loop over orbital quantum numbers
     do i_l = 0, isotopes(i) % NLS(i_ER) - 1
       read(in, 10) rec
-      read(rec(1:11),  '(E11.0)') A
+      read(rec(1:11),  '(E11.0)') AWR
       read(rec(12:22), '(E11.0)') APL
       read(rec(23:33),   '(I11)') L
       read(rec(56:66),   '(I11)') NRS
@@ -896,7 +867,7 @@ contains
       call isotopes(i) % rm_resonances(i_l + 1) % alloc(NRS)
 
       ! check mass ratios
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! check scattering radii
       call check_scattering_radius(APL, isotopes(i) % AP(i_ER))
@@ -947,7 +918,7 @@ contains
     integer :: L    ! orbital quantum number
     integer :: i_J  ! total angular momentum quantum number index
     integer :: i_ES ! tabulated fission width energy grid index
-    real(8) :: A    ! isotope/neutron mass ratio
+    real(8) :: AWR  ! isotope/neutron mass ratio
 
     ! this is forced by the ENDF-6 format when LRF = 1 and LFW = 1
     isotopes(i) % INT = LINEAR_LINEAR
@@ -959,7 +930,6 @@ contains
       read(in, 10) rec
       read(rec(1:11),  '(E11.0)') isotopes(i) % SPI(i_ER)
       read(rec(12:22), '(E11.0)') isotopes(i) % AP(i_ER)
-! TODO: don't overwrite the resolved value
       call isotopes(i) % channel_radius(i_ER)
       read(rec(23:33), '(I11)')   isotopes(i) % LSSF
       read(rec(45:55), '(I11)')   isotopes(i) % NLS(i_ER)
@@ -997,12 +967,12 @@ contains
       ! loop over orbital quantum numbers
       do i_l = 0, isotopes(i) % NLS(i_ER) - 1
         read(in, 10) rec
-        read(rec(1:11),  '(E11.0)') A
+        read(rec(1:11),  '(E11.0)') AWR
         read(rec(23:33),   '(I11)') L
         read(rec(56:66),   '(I11)') isotopes(i) % NJS(i_l + 1)
 
         ! check mass ratios
-        call check_mass(A, isotopes(i) % AWR)
+        call check_mass(AWR, isotopes(i) % AWR)
 
         ! check orbital quantum number
         call check_l_number(L, i_L)
@@ -1056,7 +1026,6 @@ contains
       read(in, 10) rec
       read(rec(1:11),  '(E11.0)') isotopes(i) % SPI(i_ER)
       read(rec(12:22), '(E11.0)') isotopes(i) % AP(i_ER)
-! TODO: don't overwrite the resolved value
       call isotopes(i) % channel_radius(i_ER)
       read(rec(23:33), '(I11)')   isotopes(i) % LSSF
       read(rec(45:55), '(I11)')   isotopes(i) % NE
@@ -1115,12 +1084,12 @@ contains
       ! loop over orbital quantum numbers
       do i_l = 0, isotopes(i) % NLS(i_ER) - 1
         read(in, 10) rec
-        read(rec(1:11),  '(E11.0)') A
+        read(rec(1:11),  '(E11.0)') AWR
         read(rec(23:33),   '(I11)') L
         read(rec(45:55),   '(I11)') isotopes(i) % NJS(i_l + 1)
 
         ! check mass ratios
-        call check_mass(A, isotopes(i) % AWR)
+        call check_mass(AWR, isotopes(i) % AWR)
 
         ! check orbital quantum number
         call check_l_number(L, i_l)
@@ -1214,14 +1183,13 @@ contains
     integer :: L    ! orbital quantum number
     integer :: i_J  ! total angular momentum quantum number index
     integer :: i_E  ! energy region index
-    real(8) :: A    ! isotope/neutron mass ratio
+    real(8) :: AWR  ! isotope/neutron mass ratio
 
     ! read first line of energy range subsection
     read(in, 10) rec
 10  format(A80)
     read(rec(1:11),  '(E11.0)') isotopes(i) % SPI(i_ER)
     read(rec(12:22), '(E11.0)') isotopes(i) % AP(i_ER)
-! TODO: don't overwrite the resolved value
     call isotopes(i) % channel_radius(i_ER)
     read(rec(23:33), '(I11)')   isotopes(i) % LSSF
     read(rec(45:55), '(I11)')   isotopes(i) % NLS(i_ER)
@@ -1246,12 +1214,12 @@ contains
     ! loop over orbital quantum numbers
     do i_l = 0, isotopes(i) % NLS(i_ER) - 1
       read(in, 10) rec
-      read(rec(1:11),  '(E11.0)') A
+      read(rec(1:11),  '(E11.0)') AWR
       read(rec(23:33),   '(I11)') L
       read(rec(45:55),   '(I11)') isotopes(i) % NJS(i_l + 1)
 
       ! check mass ratios
-      call check_mass(A, isotopes(i) % AWR)
+      call check_mass(AWR, isotopes(i) % AWR)
 
       ! check orbital quantum number
       call check_l_number(L, i_L)
@@ -1331,7 +1299,7 @@ contains
 
     if (zaid_val /= zaid_ref) then
       call exit_status(EXIT_FAILURE, trim(adjustl(filename))//&
-           ' and the corresponding ACE file give conflicting ZAID values')
+           ' and the corresponding ACE file give conflicting ZA values')
       return
     end if
 
@@ -1346,7 +1314,7 @@ contains
 
     if (awr_val /= awr_ref) then
       call log_message(WARNING,&
-           trim(adjustl(filename))//' contains inconsistent AWR values')
+           trim(adjustl(filename))//' contains inconsistent AWR and/or AWRI values.')
     end if
 
   end subroutine check_mass
@@ -1439,18 +1407,11 @@ contains
   end subroutine check_fission_widths
 
 
-!> Check that the upper energy is greater than the lower and
-!! that the number of resonance energy ranges is allowable
-  subroutine check_energy_ranges(num_ranges, e_low, e_high)
+!> Check that the upper energy is greater than the lower
+  subroutine check_energy_range(e_low, e_high)
 
-    integer :: num_ranges
     real(8) :: e_low
     real(8) :: e_high
-
-    if (num_ranges > 2) then
-      call log_message(WARNING,&
-           'NER > 2: more than 2 resonance energy regions in '//trim(filename))
-    end if
 
     if (e_high <= e_low) then
       call exit_status(EXIT_FAILURE,&
@@ -1458,7 +1419,7 @@ contains
       return
     end if
 
-  end subroutine check_energy_ranges
+  end subroutine check_energy_range
 
 
 !> Check the channel and scattering radius flags
@@ -1513,7 +1474,9 @@ contains
 
     if (ap_val /= ap_ref) then
       call log_message(WARNING,&
-           'AP value changes within a resonance energy range in '//trim(filename))
+           'l-dependent scattering radius (APL) differs from l-independent&
+           & scattering radius (AP) in '//trim(filename)//'. l-independent&
+           & scattering radius will be used in URR calculations.')
     end if
 
   end subroutine check_scattering_radius
