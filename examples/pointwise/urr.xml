@@ -8,7 +8,7 @@
     <num_p_wave>64</num_p_wave>
     <num_d_wave>64</num_d_wave>
     <num_f_wave>64</num_f_wave>
-    <parameter_energy_dependence>neutron</parameter_energy_dependence>
+    <parameter_energy_dependence>resonance</parameter_energy_dependence>
     <competitive_structure>True</competitive_structure>
   </settings>
   <isotopes>
@@ -18,6 +18,7 @@
     <isotope zaid="92238" endf_6_file="n-092_U_238.endf"/>
   </isotopes>
   <pointwise>
+    <source>reconstruction</source>
     <min_energy_spacing>1e-08</min_energy_spacing>
     <tolerance>0.001</tolerance>
   </pointwise>
