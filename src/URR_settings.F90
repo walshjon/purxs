@@ -34,6 +34,7 @@ module URR_settings
        min_delta_E_pointwise,&
        rel_err_tolerance_pointwise,&
        xs_source_pointwise,&
+       temperature_pointwise,&
        path_avg_xs,&
        path_prob_tables,&
        path_endf_files,&
@@ -76,6 +77,7 @@ module URR_settings
   ! pointwise
   real(8) :: min_delta_E_pointwise       ! min diff between pointwise xs energies [eV]
   real(8) :: rel_err_tolerance_pointwise ! max rel err for pointwise xs reconstruction
+  real(8) :: temperature_pointwise       ! temperature for pointwise xs reconstruction [K]
   integer :: xs_source_pointwise         ! source of pointwise xs
 
   ! files

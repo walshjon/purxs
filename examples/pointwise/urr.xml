@@ -19,6 +19,7 @@
   </isotopes>
   <pointwise>
     <source>reconstruction</source>
+    <temperature>293.6</temperature>
     <min_energy_spacing>1e-08</min_energy_spacing>
     <tolerance>0.001</tolerance>
   </pointwise>
