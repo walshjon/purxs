@@ -1453,11 +1453,8 @@ contains
     integer :: tab_unit = 99 ! tables output file unit
     real(8) :: E        ! neutron lab energy
     real(8) :: fmf3     ! File 3 energy grid interpolation factor
-    real(8) :: xs_t_min ! min realized total xs
-    real(8) :: xs_t_max ! max realized total xs
-
-    xs_t_min = 1.0e6_8
-    xs_t_max = XS_CUTOFF
+    real(8) :: xs_t_min(this % nT_tabs) ! min realized total xs
+    real(8) :: xs_t_max(this % nT_tabs) ! max realized total xs
 
     write(zaid_str, '(I6)') this % ZAI
 
@@ -1519,6 +1516,9 @@ contains
 
     ! loop over energy mesh
     ENERGY_LOOP: do i_E = 1, this % nE_tabs
+
+      xs_t_min(:) = 1.0e6_8
+      xs_t_max(:) = XS_CUTOFF
 
       this % E = this % E_tabs(i_E)
       E = this % E
@@ -1770,10 +1770,10 @@ contains
             end if
 
             ! Set min and max xs values encountered
-            if (this % prob_tables(i_E, i_T) % avg_t % xs < xs_t_min)&
-                 xs_t_min = this % prob_tables(i_E, i_T) % avg_t % xs
-            if (this % prob_tables(i_E, i_T) % avg_t % xs > xs_t_max)&
-                 xs_t_max = this % prob_tables(i_E, i_T) % avg_t % xs
+            if (this % prob_tables(i_E, i_T) % avg_t % xs < xs_t_min(i_T))&
+                 xs_t_min(i_T) = this % prob_tables(i_E, i_T) % avg_t % xs
+            if (this % prob_tables(i_E, i_T) % avg_t % xs > xs_t_max(i_T))&
+                 xs_t_max(i_T) = this % prob_tables(i_E, i_T) % avg_t % xs
 
             ! accumulate the result of this history
             call this % accum_history(i_E, i_T)
@@ -1895,7 +1895,7 @@ contains
           do i_band = 1, this % n_bands
             if (i_band == 1) then
               write(tab_unit, '(ES24.16,A24,6ES24.16)')&
-                   xs_t_min, '',&
+                   xs_t_min(i_T), '',&
                    ptable % t(i_band) % cnt_mean,&
                    ptable % t(i_band) % xs_mean,&
                    ptable % n(i_band) % xs_mean,&
@@ -1904,7 +1904,7 @@ contains
                    ptable % x(i_band) % xs_mean
             else if (i_band == this % n_bands) then
               write(tab_unit, '(A24,7ES24.16)')&
-                   '', xs_t_max,&
+                   '', xs_t_max(i_T),&
                    ptable % t(i_band) % cnt_mean,&
                    ptable % t(i_band) % xs_mean,&
                    ptable % n(i_band) % xs_mean,&
