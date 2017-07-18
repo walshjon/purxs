@@ -267,6 +267,11 @@ class PointwiseElement(object):
             self.xml_element_, 'source')
         self.source_.text = source_str
 
+    def temperature(self, temperature_float):
+        self.temperature_ = et.SubElement(
+            self.xml_element_, 'temperature')
+        self.temperature_.text = str(temperature_float)
+
     def min_energy_spacing(self, min_energy_spacing_float):
         self.min_energy_spacing_ = et.SubElement(
             self.xml_element_, 'min_energy_spacing')
