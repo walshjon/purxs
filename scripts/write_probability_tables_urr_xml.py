@@ -48,7 +48,7 @@ probability_tables.temperature_interpolation_method('log-log')
 isotopes = xml.IsotopesListElement()
 urr_files = endf6.urr_filenames(endf_6_filepath)
 urr_files.sort()
-symbols = endf6.symbols(urr_files)
+symbols = endf6.isotope_symbols(urr_files, 'ENDFB71')
 for i in range(len(urr_files)):
     include_isotope = False
     if ('all' in urr_isotopes) or (symbols[i] in urr_isotopes):

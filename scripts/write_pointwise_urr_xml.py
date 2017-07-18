@@ -30,12 +30,13 @@ settings.num_s_wave(64)
 settings.num_p_wave(64)
 settings.num_d_wave(64)
 settings.num_f_wave(64)
-settings.parameter_energy_dependence('neutron')
+settings.parameter_energy_dependence('resonance')
 settings.competitive_structure(True)
 
 # URR pointwise inpu
 pointwise = xml.PointwiseElement()
 pointwise.source('reconstruction')
+pointwise.temperature(293.6)
 pointwise.min_energy_spacing(1.0e-8)
 pointwise.tolerance(0.001)
 
@@ -43,7 +44,7 @@ pointwise.tolerance(0.001)
 isotopes = xml.IsotopesListElement()
 urr_files = endf6.urr_filenames(endf_6_filepath)
 urr_files.sort()
-symbols = endf6.symbols(urr_files)
+symbols = endf6.isotope_symbols(urr_files, 'ENDFB71')
 for i in range(len(urr_files)):
     include_isotope = False
     if ('all' in urr_isotopes) or (symbols[i] in urr_isotopes):
