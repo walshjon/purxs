@@ -18,33 +18,8 @@
     <isotope endf_6_file="n-092_U_238.endf"/>
   </isotopes>
   <probability_tables>
-    <read_tables>False</read_tables>
+    <read_tables>True</read_tables>
     <filepath>../../data/processed/prob_tables/endfb71/slbw/</filepath>
     <temperature_interpolation_method>log-log</temperature_interpolation_method>
-    <num_bands>16</num_bands>
-    <temperature_grid>
-      0.0
-      293.6
-      600.0
-      900.0
-      1200.0
-      2500.0
-      11604.5
-      116045.2
-      1160452.2
-      11604522.1
-      116045221.1
-      348135663.3
-      1160452211.1
-      11604522110.5
-    </temperature_grid>
-    <min_num_batches>64</min_num_batches>
-    <max_num_batches>1024</max_num_batches>
-    <num_histories>512</num_histories>
-    <tolerance>0.001</tolerance>
-    <energy_spacing>logarithmic</energy_spacing>
-    <num_energies>64</num_energies>
-    <write_tables>True</write_tables>
-    <write_avg_xs>True</write_avg_xs>
   </probability_tables>
 </urr>
