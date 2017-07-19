@@ -3,11 +3,8 @@
 
   <seed>100000000</seed>
   <ptables>true</ptables>
-  <cross_sections>/home/walshjon/data/cross_sections_endf71x.xml</cross_sections>
-
-  <verbosity>
-    <value>7</value>
-  </verbosity>
+  <cross_sections>../../../../data/processed/openmc_ace_hdf5/cross_sections_endf71x_hdf5.xml</cross_sections>
+  <temperature_default>293.6</temperature_default>
 
   <eigenvalue>
     <batches>6</batches>
@@ -17,10 +14,9 @@
 
   <source>
     <space>
-      <type>fission</type>
+      <type>point</type>
       <parameters>
-        -41.91 -41.91 -57.46750
-         41.91  41.91  39.05250
+        0. 0. 0.
       </parameters>
     </space>
   </source>

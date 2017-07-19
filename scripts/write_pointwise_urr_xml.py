@@ -33,7 +33,7 @@ settings.num_f_wave(64)
 settings.parameter_energy_dependence('resonance')
 settings.competitive_structure(True)
 
-# URR pointwise inpu
+# URR pointwise input
 pointwise = xml.PointwiseElement()
 pointwise.source('reconstruction')
 pointwise.temperature(293.6)

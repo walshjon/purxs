@@ -3,25 +3,23 @@
 import os
 from glob import glob
 
-n = len(os.listdir('.'))
-ndirs = 0
-for i in range(0,n):
-  if os.path.isdir(os.listdir('.')[i]):
-    ndirs += 1
+num_objects = len(os.listdir('.'))
+num_dirs = 0
+for i_obj in range(num_objects):
+  if os.path.isdir(os.listdir('.')[i_obj]):
+    num_dirs += 1
 
-for i in range(1,ndirs+1):
-  os.chdir('./case-'+str(i))
-  files = glob('statepoint*')
-  for file in files:
-    os.remove('./'+file)
-  files = glob('error.log')
-  for file in files:
-    os.remove('./'+file)
+for i_dir in range(1,num_dirs+1):
+  os.chdir('./case-'+str(i_dir))
+  files = (glob('statepoint*')
+           + glob('error.log')
+           + glob('*txt')
+           + glob('*dat')
+           + glob('*endf')
+           + glob('*core')
+           + glob('summary*'))
+  for f in files:
+    os.remove('./'+f)
   os.chdir('..')
 
-files = glob('system-suite.pbs.*')
-for file in files:
-  os.remove('./'+file)
-files = glob('testSystemResults.dat')
-for file in files:
-  os.remove('./'+file)
+os.remove('./test_system_results.dat')

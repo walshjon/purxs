@@ -3,62 +3,56 @@
 import os
 from glob import glob
 import sys
+import subprocess
 from subprocess import call
 import h5py as h5
 
-n = len(os.listdir('.'))
-ndirs = 0
-for i in range(0,n):
-  if os.path.isdir(os.listdir('.')[i]):
-    ndirs += 1
+num_objects = len(os.listdir('.'))
+num_dirs = 0
+for i_obj in range(num_objects):
+  if os.path.isdir(os.listdir('.')[i_obj]):
+    num_dirs += 1
 
-ktest = []
-sigtest = []
-for i in range(1,ndirs+1):
-  os.chdir('./case-'+str(i))
-  statefiles = glob('statepoint*')
-  errfiles = glob('error.log')
-  nfiles = len(statefiles) + len(errfiles)
-  if nfiles == 1:
-    if len(statefiles) == 1:
-      hf = h5.File(statefiles[0], 'r')
-      ktest.append(hf['k_combined'][0])
-      sigtest.append(hf['k_combined'][1])
-    else:
-      file = open(errfiles[0], 'r')
-      for line in file:
-        ktest.append(line)
-        break
-      file.close()
-  elif nfiles == 0:
-    sys.exit('No output files for case-'+str(i))
-  elif nfiles > 1:
-    sys.exit('Multiple output files for case-'+str(i))
+test_results = []
+for i_dir in range(1,num_dirs+1):
+  os.chdir('./case-'+str(i_dir))
+  state_files = glob('statepoint*')
+  dat_files = glob('*dat')
+  err_files = glob('error.log')
+  if len(state_files + dat_files + err_files) == 0:
+    sys.exit('No output files for case-'+str(i_dir))
+  elif len(err_files) != 0:
+    sys.exit('Error log files present for case-'+str(i_dir))
+  elif len(state_files) > 1:
+    sys.exit('Multiple statepoint output files for case-'+str(i_dir))
+
+  if len(state_files) == 1:
+    hf = h5.File(state_files[0], 'r')
+    test_results.append(str(hf['k_combined'][0])+' '+str(hf['k_combined'][1]))
+  elif len(dat_files) == 1:
+    test_results.append(subprocess.check_output('tail -n3 '+dat_files[0]+' | head -n1', shell=True).rstrip())
+  elif len(dat_files) == 2:
+    test_results.append(subprocess.check_output('tail -n1 '+dat_files[0], shell=True).rstrip()+' '+subprocess.check_output('tail -n1 '+dat_files[1], shell=True).rstrip())
   os.chdir('..')
 
-testfile = open('testSystemResults.dat', 'w')
-for kval in ktest:
-  if isinstance(kval, basestring):
-    testfile.write(kval)
-  else:
-    testfile.write('%.17f'%float(kval)+'\n')
-testfile.close()
+test_file = open('test_system_results.dat', 'w')
+for result in test_results:
+  test_file.write(result+'\n')
+test_file.close()
 
-refk = []
-testk = []
-reffile = open('referenceSystemResults.dat', 'r')
-testfile = open('testSystemResults.dat', 'r')
-for line in reffile:
-  refk.append(line)
-for line in testfile:
-  testk.append(line)
-reffile.close()
-testfile.close()
+ref_results = []
+ref_file = open('reference_system_results.dat', 'r')
+for line in ref_file:
+  ref_results.append(line)
+ref_file.close()
+test_results = []
+test_file = open('test_system_results.dat', 'r')
+for line in test_file:
+  test_results.append(line)
+test_file.close()
 
-cnt = 0
-for kval in refk:
-  if kval == testk[cnt]:
-    call(['echo', 'case-'+str(cnt+1)+' passed'])
+for i_result in range(len(ref_results)):
+  if ref_results[i_result] == test_results[i_result]:
+    call(['echo', 'case-'+str(i_result+1)+' passed'])
   else:
-    call(['echo', 'case-'+str(cnt+1)+' failed'])
-  cnt += 1
+    call(['echo', 'case-'+str(i_result+1)+' failed'])

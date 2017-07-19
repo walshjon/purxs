@@ -4,4 +4,4 @@ import os
 from subprocess import call
 
 os.chdir('./system')
-call(['python', 'checkSystemResults.py'])
+call(['./check_system_results.py'])

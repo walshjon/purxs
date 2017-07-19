@@ -1,28 +1,23 @@
-<?xml version="1.0"?>
 <urr>
-
-  <ENDF-6_filepath>
-    /home/walshjon/data/evaluations/endf-7.1/neutrons/
-  </ENDF-6_filepath>
-  <avg_xs_filepath>
-    /home/walshjon/data/avg-urr-xs/endf-7.1/slbw/
-  </avg_xs_filepath>
-  <formalism>slbw</formalism>
-  <w_function>quick_w</w_function>
-  <n_s_wave>64</n_s_wave>
-  <n_p_wave>64</n_p_wave>
-  <n_d_wave>64</n_d_wave>
-  <n_f_wave>64</n_f_wave>
-  <parameter_energy_dependence>resonance</parameter_energy_dependence>
-  <competitive>false</competitive>
-
-  <nuclide zaid="92235" endf="n-092_U_235.endf" />
-  <nuclide zaid="92238" endf="n-092_U_238.endf" />
-  <nuclide zaid="92234" endf="n-092_U_234.endf" />
-  <nuclide zaid="92236" endf="n-092_U_236.endf" />
-
+  <settings>
+    <endf_6_filepath>../../../../data/evaluated/endfb71/neutrons/</endf_6_filepath>
+    <avg_xs_filepath>../../../../data/processed/avg_xs/endfb71/slbw/</avg_xs_filepath>
+    <formalism>SLBW</formalism>
+    <w_function_implementation>quick_w</w_function_implementation>
+    <num_s_wave>64</num_s_wave>
+    <num_p_wave>64</num_p_wave>
+    <num_d_wave>64</num_d_wave>
+    <num_f_wave>64</num_f_wave>
+    <parameter_energy_dependence>resonance</parameter_energy_dependence>
+    <competitive_structure>False</competitive_structure>
+  </settings>
+  <isotopes>
+    <isotope endf_6_file="n-092_U_234.endf"/>
+    <isotope endf_6_file="n-092_U_235.endf"/>
+    <isotope endf_6_file="n-092_U_236.endf"/>
+    <isotope endf_6_file="n-092_U_238.endf"/>
+  </isotopes>
   <on_the_fly>
     <frequency>event</frequency>
   </on_the_fly>
-
 </urr>

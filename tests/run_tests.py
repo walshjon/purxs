@@ -4,4 +4,4 @@ import os
 from subprocess import call
 
 os.chdir('./regression')
-call(['python', 'runRegressionTests.py'])
+call(['./run_regression_tests.py'])
