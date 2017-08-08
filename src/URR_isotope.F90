@@ -1459,7 +1459,7 @@ contains
     write(zaid_str, '(I6)') this % ZAI
 
     if (write_prob_tables) then
-      open(unit = tab_unit, file = trim(adjustl(zaid_str))//'-prob-tables.dat')
+      open(unit = tab_unit, file = trim(path_prob_tables)//trim(adjustl(zaid_str))//'-prob-tables.dat')
       write(tab_unit, '("ENDF-6 File:")', advance='no')
       write(tab_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_isotope)))
       write(tab_unit, '("Resonance Formalism:")', advance='no')
@@ -1488,7 +1488,7 @@ contains
     end if
 
     if (write_avg_xs) then
-      open(unit = avg_unit, file = trim(adjustl(zaid_str))//'-avg-urr-xs.dat')
+      open(unit = avg_unit, file = trim(path_avg_xs)//trim(adjustl(zaid_str))//'-avg-urr-xs.dat')
       write(avg_unit, '("ENDF-6 File:")', advance='no')
       write(avg_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_isotope)))
       write(avg_unit, '("Resonance Formalism:")', advance='no')
