@@ -2392,16 +2392,101 @@ contains
     deallocate(this % NJS)
 
   end subroutine dealloc_isotope
-  
+
+
+!> Calculate URR cross section values from pre-computed pointwise values
+!! reconstructed at simulation initialization
+  subroutine pointwise_xs(this, E, T, xs_in, xs_out)
+
+    class(Isotope), intent(inout) :: this ! isotope object
+    real(8), intent(in) :: E ! neutron energy
+    real(8), intent(in) :: T ! isotope temperature [K]
+    type(CrossSections), intent(in)  :: xs_in  ! application code cross sections
+    type(CrossSections), intent(out) :: xs_out ! library output cross sections
+
+    this % E = E
+    this % T = T
+
+    select case(xs_source_pointwise)
+    case(RECONSTRUCTION)
+      i_E = binary_search(this % urr_E, size(this % urr_E), E)
+      m = interp_factor(E, this % urr_E(i_E), this % urr_E(i_E + 1), &
+           LINEAR_LINEAR)
+      xs_out % n = interpolate(&
+           m, this % point_xs(i_E) % n, this % point_xs(i_E + 1) % n, LINEAR_LINEAR)
+      xs_out % f = interpolate(&
+           m, this % point_xs(i_E) % f, this % point_xs(i_E + 1) % f, LINEAR_LINEAR)
+      xs_out % g = interpolate(&
+           m, this % point_xs(i_E) % g, this % point_xs(i_E + 1) % g, LINEAR_LINEAR)
+      if (this % point_xs(i_E) % x > ZERO) then
+        xs_out % x = interpolate(&
+             m, this % point_xs(i_E) % x, this % point_xs(i_E + 1) % x, LINEAR_LINEAR)
+      else
+        xs_out % x = ZERO
+      end if
+
+      xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
+
+    case(HDF5)
+      xs_out % n = xs_in % n
+      xs_out % g = xs_in % g
+      xs_out % f = xs_in % f
+      xs_out % x = xs_in % x
+      xs_out % t = xs_in % t
+      call this % subtract_mf3(xs_out, mf3_xs)
+      if (this % E < this % E_avg_xs(1)) then
+        iavg = 1
+      else if (this % E > this % E_avg_xs(this % num_avg_xs_grid - 1)) then
+        iavg = this % num_avg_xs_grid - 1
+      else
+        iavg = binary_search(this % E_avg_xs, this % num_avg_xs_grid, this % E)
+      end if
+
+      favg = interp_factor(this % E,&
+           this % E_avg_xs(iavg), this % E_avg_xs(iavg + 1), this % INT)
+
+      call this % interpolate_avg_xs(favg, iavg, avg_xs)
+
+      ! competitive xs
+      ! pointwise data from HDF5 file is assumed to follow ENDF-6
+      ! recommendation to ALWAYS use MF3 competitive reaction cross sections
+      xs_out % x = mf3_xs % x
+
+      ! elastic scattering xs
+      xs_out % n = mf3_xs % n * xs_out % n / avg_xs % n
+
+      ! set negative elastic xs and competitive xs to zero
+      if (xs_out % n < ZERO) xs_out % n = ZERO
+      if (xs_out % x < ZERO) xs_out % x = ZERO
+
+      ! radiative capture xs
+      if (avg_xs % g > ZERO) then
+        xs_out % g = mf3_xs % g * xs_out % g / avg_xs % g
+      else
+        xs_out % g = xs_out % g
+      end if
+
+      ! fission xs
+      if (avg_xs % f > ZERO) then
+        xs_out % f = mf3_xs % f * xs_out % f / avg_xs % f
+      else
+        xs_out % f = xs_out % f
+      end if
+
+      xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
+
+    end select
+
+  end subroutine pointwise_xs
+
 
 !> Calculate URR cross section values on-the-fly, generating a new realization
-!! about each new E_n OR from pre-computed pointwise values reconstructed at
-!! simulation initialization
+!! about each new E_n
   subroutine new_realization_otf_xs(this, E, T, xs_in, xs_out)
 
     class(Isotope), intent(inout) :: this ! isotope object
-    real(8) :: E ! neutron energy
-    real(8) :: T ! isotope temperature [K]
+    real(8), intent(in) :: E ! neutron energy
+    real(8), intent(in) :: T ! isotope temperature [K]
     type(CrossSections), intent(in)  :: xs_in  ! application code cross sections
     type(CrossSections), intent(out) :: xs_out ! library output cross sections
 
@@ -2419,82 +2504,6 @@ contains
 
     this % E = E
     this % T = T
-
-    if (this % point_urr_xs) then
-      select case(xs_source_pointwise)
-      case(RECONSTRUCTION)
-        i_E = binary_search(this % urr_E, size(this % urr_E), E)
-        m = interp_factor(E, this % urr_E(i_E), this % urr_E(i_E + 1), &
-             LINEAR_LINEAR)
-        xs_out % n = interpolate(&
-             m, this % point_xs(i_E) % n, this % point_xs(i_E + 1) % n, LINEAR_LINEAR)
-        xs_out % f = interpolate(&
-             m, this % point_xs(i_E) % f, this % point_xs(i_E + 1) % f, LINEAR_LINEAR)
-        xs_out % g = interpolate(&
-             m, this % point_xs(i_E) % g, this % point_xs(i_E + 1) % g, LINEAR_LINEAR)
-        if (this % point_xs(i_E) % x > ZERO) then
-          xs_out % x = interpolate(&
-               m, this % point_xs(i_E) % x, this % point_xs(i_E + 1) % x, LINEAR_LINEAR)
-        else
-          xs_out % x = ZERO
-        end if
-
-        xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
-
-      case(HDF5)
-        xs_out % n = xs_in % n
-        xs_out % g = xs_in % g
-        xs_out % f = xs_in % f
-        xs_out % x = xs_in % x
-        xs_out % t = xs_in % t
-        call this % subtract_mf3(xs_out, mf3_xs)
-        if (this % E < this % E_avg_xs(1)) then
-          iavg = 1
-        else if (this % E > this % E_avg_xs(this % num_avg_xs_grid - 1)) then
-          iavg = this % num_avg_xs_grid - 1
-        else
-          iavg = binary_search(this % E_avg_xs, this % num_avg_xs_grid, this % E)
-        end if
-
-        favg = interp_factor(this % E,&
-             this % E_avg_xs(iavg), this % E_avg_xs(iavg + 1), this % INT)
-
-        call this % interpolate_avg_xs(favg, iavg, avg_xs)
-
-        ! competitive xs
-        ! pointwise data from HDF5 file is assumed to follow ENDF-6
-        ! recommendation to ALWAYS use MF3 competitive reaction cross sections
-        xs_out % x = mf3_xs % x
-
-        ! elastic scattering xs
-        xs_out % n = mf3_xs % n * xs_out % n / avg_xs % n
-
-        ! set negative elastic xs and competitive xs to zero
-        if (xs_out % n < ZERO) xs_out % n = ZERO
-        if (xs_out % x < ZERO) xs_out % x = ZERO
-
-        ! radiative capture xs
-        if (avg_xs % g > ZERO) then
-          xs_out % g = mf3_xs % g * xs_out % g / avg_xs % g
-        else
-          xs_out % g = xs_out % g
-        end if
-
-        ! fission xs
-        if (avg_xs % f > ZERO) then
-          xs_out % f = mf3_xs % f * xs_out % f / avg_xs % f
-        else
-          xs_out % f = xs_out % f
-        end if
-
-        xs_out % t = xs_out % n + xs_out % g + xs_out % f + xs_out % x
-
-      end select
-
-      return
-
-    end if
-
     this % k_n = wavenumber(this % AWR, abs(this % E))
     this % k_lam = this % k_n
 
