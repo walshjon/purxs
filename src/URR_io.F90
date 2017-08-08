@@ -310,7 +310,9 @@ contains
       write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
     end if
 
-    open(unit = res_unit, file = trim(adjustl(zaid_str))//'-urr-realization.dat')
+    ! open resonance realization file
+    open(unit=res_unit,&
+         file=trim(path_endf_files)//trim(adjustl(zaid_str))//'-urr-realization.dat')
 
 10  format(A80)
 20  format(i4,i2,i3,i5)
@@ -481,7 +483,8 @@ contains
     close(res_unit)
 
     ! write summary of realization
-    open(unit = sum_unit, file = trim(adjustl(zaid_str))//'-urr-realization-summary.txt')
+    open(unit=sum_unit,&
+         file=trim(path_endf_files)//trim(adjustl(zaid_str))//'-urr-realization-summary.txt')
     write(sum_unit, '("Unresolved Resonance Region Realization Summary")')
     write(sum_unit, '("ENDF-6 File:")', advance='no')
     write(sum_unit, *) trim(adjustl(path_endf_files))//trim(adjustl(endf_filenames(i_iso)))
@@ -538,9 +541,9 @@ contains
       write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
     end if
 
-    open(unit = mf2_unit, file = trim(adjustl(zaid_str))//'-urr-realization.dat')
-    open(unit = old_unit, file = path_endf_files//trim(adjustl(endf_filenames(i_iso))))
-    open(unit = new_unit, file = 'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))))
+    open(unit = mf2_unit, file = trim(path_endf_files)//trim(adjustl(zaid_str))//'-urr-realization.dat')
+    open(unit = old_unit, file = trim(path_endf_files)//trim(adjustl(endf_filenames(i_iso))))
+    open(unit = new_unit, file = trim(path_endf_files)//'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))))
 
 10  format(A80)
 20  format(i4,i2,i3,i5)
@@ -598,7 +601,7 @@ contains
     close(old_unit)
     close(new_unit)
 
-    open(unit = new_unit, file = 'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))))
+    open(unit = new_unit, file = trim(path_endf_files)//'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))))
     i_rec = 0
     do
       i_rec = i_rec + 1
@@ -611,7 +614,7 @@ contains
     close(new_unit)
 
     write(new_rec, '(A44,I11,A25,A1)') rec(1:44), NC, rec(56:80), new_line('')
-    open(unit = new_unit, file = 'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))),&
+    open(unit = new_unit, file = trim(path_endf_files)//'purxs-urr-LRU1-'//trim(adjustl(endf_filenames(i_iso))),&
          access="direct", recl=81, action="write")
     write(unit = new_unit, rec = i_rec) new_rec
     close(new_unit)
