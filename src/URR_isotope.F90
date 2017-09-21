@@ -86,6 +86,8 @@ module URR_isotope
        num_temperatures_prob_tables,&
        num_urr_realizations,&
        parameter_energy_dependence,&
+       path_avg_xs,&
+       path_prob_tables,&
        path_endf_files,&
        rel_err_tolerance_avg_xs,&
        rel_err_tolerance_pointwise,&
@@ -361,6 +363,9 @@ module URR_isotope
 
     ! calculate xs from pre-computed probability tables
     procedure :: prob_band_xs => prob_band_xs
+
+    ! calculate xs from pre-computed pointwise values
+    procedure :: pointwise_xs => pointwise_xs
 
     ! calculate xs from a new realization of resonances on-the-fly
     procedure :: new_realization_otf_xs => new_realization_otf_xs
@@ -2404,6 +2409,13 @@ contains
     type(CrossSections), intent(in)  :: xs_in  ! application code cross sections
     type(CrossSections), intent(out) :: xs_out ! library output cross sections
 
+    type(CrossSections) :: mf3_xs ! MF3 partial cross sections object
+    type(CrossSections) :: avg_xs ! interpolated cross sections
+    integer :: i_E  ! first URR parameters energy mesh index
+    integer :: iavg ! average cross section index
+    real(8) :: favg ! average cross section interpolation factor
+    real(8) :: m    ! pointwise xs energy interpolation factor
+
     this % E = E
     this % T = T
 
@@ -2499,8 +2511,8 @@ contains
     integer :: i_J      ! total angular momentum quantum number index
     integer :: i_r      ! resonance index
     integer :: n_res    ! number of resonances to include for a given l-wave
-    real(8) :: m            ! pointwise xs energy interpolation factor
-    real(8) :: favg         ! average cross section interpolation factor
+    real(8) :: m    ! pointwise xs energy interpolation factor
+    real(8) :: favg ! average cross section interpolation factor
 
     this % E = E
     this % T = T
@@ -4347,7 +4359,7 @@ contains
       return
 
     else
-      i_grid = binary_search(this % MF3_n_e, size(this % MF3_n_e),this % E)
+      i_grid = binary_search(this % MF3_n_e, size(this % MF3_n_e), this % E)
       if (this % INT == LINEAR_LINEAR &
            .or. (this % MF3_n(i_grid) > ZERO &
            .and. this % MF3_n(i_grid + 1) > ZERO)) then
