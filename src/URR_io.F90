@@ -49,12 +49,8 @@ contains
     integer :: ZAI           ! isotope ZA number
     real(8) :: tol ! tolerance used in generating avg xs values
 
-    if (isotopes(i_iso) % metastable) then
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-      zaid_str = trim(adjustl(zaid_str)) // 'm'
-    else
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-    end if
+    write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
+    if (isotopes(i_iso) % metastable) zaid_str = trim(adjustl(zaid_str)) // 'm'
 
     ! check that file exists and is readable
     inquire(file = trim(path_avg_xs)//trim(adjustl(zaid_str))//&
@@ -153,12 +149,8 @@ contains
     character(7) :: zaid_str ! ZA number as a string
     character(255) :: rec ! file record
 
-    if (isotopes(i_iso) % metastable) then
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-      zaid_str = trim(adjustl(zaid_str)) // 'm'
-    else
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-    end if
+    write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
+    if (isotopes(i_iso) % metastable) zaid_str = trim(adjustl(zaid_str)) // 'm'
 
     ! check that file exists and is readable
     inquire(file = trim(path_prob_tables)//trim(adjustl(zaid_str))//&
@@ -303,12 +295,8 @@ contains
     character(7)  :: zaid_str ! ZA number as a string
     character(80) :: rec      ! ENDF-6 file record
 
-    if (isotopes(i_iso) % metastable) then
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-      zaid_str = trim(adjustl(zaid_str)) // 'm'
-    else
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-    end if
+    write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
+    if (isotopes(i_iso) % metastable) zaid_str = trim(adjustl(zaid_str)) // 'm'
 
     ! open resonance realization file
     open(unit=res_unit,&
@@ -534,12 +522,8 @@ contains
     integer :: NC     ! number of records in MF=2, MT=151 w/ realization inserted
     integer :: i_rec  ! record count
 
-    if (isotopes(i_iso) % metastable) then
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-      zaid_str = trim(adjustl(zaid_str)) // 'm'
-    else
-      write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
-    end if
+    write(zaid_str, '(I7)') isotopes(i_iso) % ZAI
+    if (isotopes(i_iso) % metastable) zaid_str = trim(adjustl(zaid_str)) // 'm'
 
     open(unit = mf2_unit, file = trim(path_endf_files)//trim(adjustl(zaid_str))//'-urr-realization.dat')
     open(unit = old_unit, file = trim(path_endf_files)//trim(adjustl(endf_filenames(i_iso))))
