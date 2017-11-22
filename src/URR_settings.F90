@@ -31,11 +31,13 @@ module URR_settings
        num_urr_realizations,&
        i_realization,&
        i_realization_user,&
+       pregenerated_point_xs,&
        min_delta_E_pointwise,&
        rel_err_tolerance_pointwise,&
        xs_source_pointwise,&
        temperature_pointwise,&
        path_avg_xs,&
+       path_point_xs,&
        path_prob_tables,&
        path_endf_files,&
        endf_filenames
@@ -75,6 +77,7 @@ module URR_settings
   integer :: i_realization_user    ! user-specified realization index
 
   ! pointwise
+  logical :: pregenerated_point_xs       ! load pointwise xs or generate new ones?
   real(8) :: min_delta_E_pointwise       ! min diff between pointwise xs energies [eV]
   real(8) :: rel_err_tolerance_pointwise ! max rel err for pointwise xs reconstruction
   real(8) :: temperature_pointwise       ! temperature for pointwise xs reconstruction [K]
@@ -82,6 +85,7 @@ module URR_settings
 
   ! files
   character(:), allocatable :: path_avg_xs      ! path to averaged URR xs files
+  character(:), allocatable :: path_point_xs    ! path to pointwise URR xs files
   character(:), allocatable :: path_prob_tables ! path to probability table files
   character(:), allocatable :: path_endf_files  ! path to ENDF-6 files
   character(255), allocatable :: endf_filenames(:) ! list of ENDF-6 filenames

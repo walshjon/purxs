@@ -27,6 +27,7 @@ module URR_io
   private
   public ::&
        read_avg_xs,&
+       read_point_xs,&
        read_prob_tables,&
        write_MF2
 
@@ -134,6 +135,15 @@ contains
 
   end subroutine read_avg_xs
 
+
+!> Reads in pre-generated URR pointwise cross sections
+  subroutine read_point_xs(i_iso)
+
+    integer, intent(in) :: i_iso ! isotope index
+
+    call exit_status(EXIT_FAILURE, 'Reading in pre-generated pointwise URR xs not yet implemented')
+
+  end subroutine read_point_xs
 
 !> Reads in pre-generated URR probability tables
   subroutine read_prob_tables(i_iso)

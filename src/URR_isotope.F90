@@ -85,6 +85,7 @@ module URR_isotope
        num_urr_realizations,&
        parameter_energy_dependence,&
        path_avg_xs,&
+       path_point_xs,&
        path_prob_tables,&
        path_endf_files,&
        rel_err_tolerance_avg_xs,&
@@ -612,17 +613,19 @@ contains
 
     type(Resonance) :: res ! resonance object
     type(CrossSections) :: xs ! object containing all partial xs values
-    integer :: i_l       ! orbital quantum number
-    integer :: i_J       ! total angular momentum quantum number
-    integer :: n_res     ! number of contributing l-state resonances
-    integer :: n_rrr_res ! number of RRR resonances we need to grab
-    integer :: i_low     ! index of lowest-lying resonance
-    integer :: i_res     ! resonance counter
-    integer :: i_rrr_res ! RRR resonance index
-    integer :: i_ES      ! index of current URR tabulated energy
-    integer :: iE        ! pointwise energy grid index
-    integer :: i_list       ! index in list of resonances for all (l,J)
-    integer :: i_list_start ! index where to start searching for E_lam
+    character(7) :: zaid_str ! ZAID number as a string
+    integer :: i_l             ! orbital quantum number
+    integer :: i_J             ! total angular momentum quantum number
+    integer :: n_res           ! number of contributing l-state resonances
+    integer :: n_rrr_res       ! number of RRR resonances we need to grab
+    integer :: i_low           ! index of lowest-lying resonance
+    integer :: i_res           ! resonance counter
+    integer :: i_rrr_res       ! RRR resonance index
+    integer :: i_ES            ! index of current URR tabulated energy
+    integer :: iE              ! pointwise energy grid index
+    integer :: i_list          ! index in list of resonances for all (l,J)
+    integer :: i_list_start    ! index where to start searching for E_lam
+    integer :: point_unit = 99 ! pointwise xs output file unit
     real(8) :: E_lo         ! lower energy grid point for interpolation
     real(8) :: E_hi         ! upper energy grid point for interpolation
     real(8) :: E_mid        ! trial interpolated energy grid point
@@ -634,6 +637,7 @@ contains
     real(8) :: E_0          ! energy at current list index
     real(8) :: E_1          ! energy at next list index
     real(8) :: E_last       ! energy at last grid index
+    real(8) :: E_print      ! energy at which to print out progress to stdout
 
     this % T = T
 
@@ -662,6 +666,7 @@ contains
     ! clean energy grid of duplicates, values outside URR
     i_list = 1
     E_last = min(this % EH(this % i_urr), this % max_E_urr)
+    E_print = this % EL(this % i_urr)
     do
       if (i_list == this % E_tmp % size()) exit
       E_0 = this % E_tmp % get_item(i_list)
@@ -899,6 +904,12 @@ contains
     ! refine energy grid until total cross section convergence
     i_ES = 2
     do
+      ! print current progress to stdout
+      if (E_lo >= E_print) then
+        write(*,*) 'Generated pointwise URR xs at ', E_print
+        E_print = E_print + 1000.0
+      end if
+
       if (i_ES <= this % NE) then
         if (this % E > this % ES(i_ES - 1)) then
           i_ES = i_ES + 1
@@ -1160,6 +1171,15 @@ contains
     ! pass temporary, energy-xs linked lists to dynamic vectors
     allocate(this % urr_E(this % E_tmp % size()))
     allocate(this % point_xs(this % E_tmp % size()))
+    write(zaid_str, '(I7)') this % ZAI
+    open(unit = point_unit, file = trim(path_point_xs)//trim(adjustl(zaid_str))//'-point-urr-xs.dat')
+    write(point_unit, '(6A24)')&
+         'E [eV]',&
+         'total xs [b]',&
+         'elastic xs [b]',&
+         'capture xs [b]',&
+         'fission xs [b]',&
+         'competitive xs [b]'
     do iE = 1, this % E_tmp % size()
       this % urr_E(iE) = this % E_tmp % get_item(iE)
       this % point_xs(iE) % n = this % n_tmp % get_item(iE)
@@ -1167,7 +1187,15 @@ contains
       this % point_xs(iE) % f = this % f_tmp % get_item(iE)
       this % point_xs(iE) % x = this % x_tmp % get_item(iE)
       this % point_xs(iE) % t = this % t_tmp % get_item(iE)
+      write(point_unit, '(6ES24.16)')&
+           this % urr_E(iE),&
+           this % point_xs(iE) % t,&
+           this % point_xs(iE) % n,&
+           this % point_xs(iE) % g,&
+           this % point_xs(iE) % f,&
+           this % point_xs(iE) % x
     end do
+    close(point_unit)
     call this % E_tmp % clear()
     call this % n_tmp % clear()
     call this % g_tmp % clear()
@@ -1439,7 +1467,7 @@ contains
     type(ProbabilityTable), pointer :: ptable ! prob. table pointer
     type(Resonance) :: res ! resonance object
     type(CrossSections) :: xs_potential ! potential cross sections object
-    character(6) :: zaid_str ! ZAID number as a string
+    character(7) :: zaid_str ! ZAID number as a string
     integer :: i_b    ! batch index
     integer :: i_band ! probability band index
     integer :: i_E    ! energy grid index
@@ -1459,7 +1487,7 @@ contains
     real(8) :: xs_t_min(this % nT_tabs) ! min realized total xs
     real(8) :: xs_t_max(this % nT_tabs) ! max realized total xs
 
-    write(zaid_str, '(I6)') this % ZAI
+    write(zaid_str, '(I7)') this % ZAI
 
     if (write_prob_tables) then
       open(unit = tab_unit, file = trim(path_prob_tables)//trim(adjustl(zaid_str))//'-prob-tables.dat')

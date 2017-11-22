@@ -911,7 +911,6 @@ contains
 
 
 !> Read in unresolved resonance region parameters for the LRF = 1 option
-!! (only fission widths are energy-dependent)
   subroutine read_urr_slbw_parameters_lrf1(i, i_ER)
 
     character(80) :: rec ! ENDF-6 file record
