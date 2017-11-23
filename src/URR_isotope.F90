@@ -202,6 +202,7 @@ module URR_isotope
     logical :: point_urr_xs = .false. ! calculate pointwise URR cross sections?
     integer :: i_urr ! index of URR energy range
     real(8) :: max_E_urr ! max energy for URR treatment
+    real(8) :: min_E_urr ! min energy for URR treatment
 
     ! probability tables for given (energy, temperature) pairs
     integer :: nE_tabs ! number of probability table energies
@@ -645,7 +646,7 @@ contains
     i_realization = 1
 
     ! initialize linked list of energies to lower URR bound
-    call this % E_tmp % append(this % EL(this % i_urr))
+    call this % E_tmp % append(max(this % EL(this % i_urr), this % min_E_urr))
 
     ! loop over resonances for all spin sequences and add energies
     do i_l = 1, this % NLS(this % i_urr)
@@ -666,7 +667,7 @@ contains
     ! clean energy grid of duplicates, values outside URR
     i_list = 1
     E_last = min(this % EH(this % i_urr), this % max_E_urr)
-    E_print = this % EL(this % i_urr)
+    E_print = max(this % EL(this % i_urr), this % min_E_urr)
     do
       if (i_list == this % E_tmp % size()) exit
       E_0 = this % E_tmp % get_item(i_list)
